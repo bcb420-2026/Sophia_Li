@@ -1,0 +1,33 @@
+---
+title: "notebook"
+output: html_document
+---
+
+```{r}
+set.seed(42)
+```
+
+Generate a 5 x 10 matrix of random integers between 1-100
+
+```{r}
+m <- matrix(sample(1:100, 50, replace = TRUE), nrow = 5, ncol = 10)
+```
+
+Set column and row names
+
+```{r}
+colnames(m) <- c("cond1", "cond2", "cond3", "cond4", "cond5", 
+                 "ctr1", "ctr2", "ctr3", "ctr4", "ctr5") 
+rownames(m) <- c("gene1", "gene2", "gene3", "gene4", "gene5")
+```
+
+Compute fold-change for each gene
+
+```{r}
+cond_mean <- rowMeans(m[, 1:5]) 
+ctrl_mean <- rowMeans(m[, 6:10])
+
+fold_change <- cond_mean / ctrl_mean
+
+print(fold_change)
+```
