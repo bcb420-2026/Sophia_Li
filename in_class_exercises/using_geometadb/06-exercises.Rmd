@@ -1,4 +1,3 @@
-
 # Exercises: Inspect Specific GEO Series
 
 In this exercise, you'll retrieve metadata for the following GEO Series and answer:
@@ -7,13 +6,45 @@ In this exercise, you'll retrieve metadata for the following GEO Series and answ
 
 **Questions per GSE**
 
-  1. **What type of data is it?  Describe it.** (platform technology; e.g., high-throughput sequencing, array)
-  1. **What disease or model is it using?** (infer from series title/summary/platform organism)
-  1. **How many samples are there? What type of data is associated with the record?** 
-  1. **How many control and how many disease?** 
-  1.  **Can you find out any information about the GEO dataset - GSE264108. Why or Why not?
-  
+1.  **What type of data is it? Describe it.** (platform technology; e.g., high-throughput sequencing, array)
+2.  **What disease or model is it using?** (infer from series title/summary/platform organism)
+3.  **How many samples are there? What type of data is associated with the record?**
+4.  **How many control and how many disease?**
+5.  **Can you find out any information about the GEO dataset - GSE264108. Why or Why not?**
 
 > Hint: Sample labels are not standardized. Use robust keyword detection (e.g., `control|normal|healthy|wild[- ]?type` vs. `tumou?r|cancer|patient|disease|mutant|treated`). Inspect a few GSM rows if the automatic inference is uncertain.
 
+## Dataset 1 - GSE201427
 
+```{r}
+sql <- paste("SELECT * FROM gse WHERE gse.gse = 'GSE201427'")
+(rs <- dbGetQuery(con, sql))
+```
+
+## Dataset 2 - GSE166530
+
+```{r}
+sql <- paste("SELECT * FROM gse WHERE gse.gse = 'GSE166530'")
+(rs <- dbGetQuery(con, sql))
+```
+
+## Dataset 3 - GSE162183
+
+```{r}
+sql <- paste("SELECT * FROM gse WHERE gse.gse = 'GSE162183'")
+(rs <- dbGetQuery(con, sql))
+```
+
+## Dataset 4 - GSE186458
+
+```{r}
+sql <- paste("SELECT * FROM gse WHERE gse.gse = 'GSE186458'")
+(rs <- dbGetQuery(con, sql))
+```
+
+## Dataset 5 - **GSE264108**
+
+```{r}
+sql <- paste("SELECT * FROM gse WHERE gse.gse = 'GSE264108'")
+(rs <- dbGetQuery(con, sql))
+```

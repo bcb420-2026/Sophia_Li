@@ -1,4 +1,3 @@
-
 # Exploring Platforms (GPL)
 
 How many platforms exist, and what technologies do they use?
@@ -22,6 +21,8 @@ plot_df <- subset(num_uniq_tech, !is.na(technology))
 
 ```{r}
 num_uniq_tech_human <- dbGetQuery(con, "select technology, count(*) as Num_Platforms from gpl where organism = 'Homo sapiens' group by technology order by Num_Platforms desc")
+NROW(num_uniq_tech_human)
+
 num_uniq_tech_contain_human <- dbGetQuery(con, "select technology, count(*) as Num_Platforms from gpl where organism like '%Homo sapiens%' group by technology order by Num_Platforms desc")
 
 library(dplyr)

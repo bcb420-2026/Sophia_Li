@@ -1,7 +1,6 @@
-
 # Finding Datasets of Interest
 
-Goal: RNA-seq, human, recent (last ~3 years), and with sufficient samples.
+Goal: RNA-seq, human, recent (last \~3 years), and with sufficient samples.
 
 ## RNA-seq series by platform technology
 

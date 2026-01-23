@@ -1,8 +1,6 @@
-
 # Setting up `GEOmetadb`
 
-`GEOmetadb` provides a SQLite mirror of GEO metadata that you can query from R.
-It mirrors GEO as-is (no curation). Download the current SQLite file once and reuse it.
+`GEOmetadb` provides a SQLite mirror of GEO metadata that you can query from R. It mirrors GEO as-is (no curation). Download the current SQLite file once and reuse it.
 
 ## Install packages
 
