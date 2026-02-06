@@ -4,7 +4,6 @@ Before choosing a normalization method, inspect data distributions.
 
 ## load Some data
 
-
 ```{r get_data}
 library(GEOquery)
 library(knitr)
@@ -63,7 +62,6 @@ kable_head(x[, 1:min(6, ncol(x))], 5, paste(gse,": raw table preview"))
 
 ```
 
-
 ## Boxplots
 
 ```{r}
@@ -87,7 +85,6 @@ plot_box <- function(mat, main = "", ylab = "log2(counts+1)") {
 plot_box(x[,2:ncol(x)])
 ```
 
-
 ## Density plots
 
 ```{r}
@@ -107,5 +104,3 @@ plot_density <- function(mat, main = "") {
 
 plot_density(x[,2:ncol(x)])
 ```
-
-
