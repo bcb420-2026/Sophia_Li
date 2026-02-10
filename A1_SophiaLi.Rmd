@@ -1,0 +1,1267 @@
+---
+title: "BCB420H1 Winter 2026 - Assignment 1"
+subtitle: "Dataset Selection, Preprocessing, and Differential Expression Analysis of Bulk RNA-Seq Data of Aplastic Anemia and Healthy Donors" 
+author: "Sophia Li"
+date: "2026-02-10"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    number_sections: true
+    theme: flatly
+    highlight: tango
+    fig_caption: true
+    df_print: paged 
+    code_folding: hide
+bibliography: A1_SophiaLi_references.bib
+nocite: '@*'
+link-citations: true
+---
+
+# Introduction {#introduction}
+
+Aplastic anemia (AA) is a rare and severe hematologic disorder characterized by bone marrow failure and pancytopenia which causes deficiency of all blood cell types. Patients commonly experiences fatigue, frequent infections, and bleeding tendencies due to the lack of sufficient blood cells, where severity varies depending on the extent of marrow failure. AA can arise from autoimmune-mediated destruction of hematopoietic stem cells, exposure to chemicals or drugs, radiation, or inherited genetic defects. It is a rare condition, with an estimated incidence of 1-2 cases per million people annually in most populations [@young_aplastic_2018].
+
+Studying AA through gene expression analysis allows researchers to investigate the molecular mechanisms underlying stem cell dysfunction and immune-mediated marrow suppression [@noauthor_rnaseq_nodate]. Identifying differentially expressed genes between AA patients and healthy controls can reveal pathways relevant to disease pathogenesis and potential therapeutic targets [@zhu_single-cell_2021].
+
+A recent study by Zhu et al. used single-cell transcriptomics to dissect the molecular landscape of hematopoietic stem and progenitor cells (HSPCs) and T cells in patients with AA. The authors aimed to characterize lineage-specific gene expression alterations and transcriptional regulatory networks in residual HSPCs from AA patients and healthy controls at single-cell resolution. Included in this study was three primary data sets corresponding to full-length RNA-seq, 3' RNA-seq, and bulk RNA-seq of patients with severe (SAA) and non-severe aplastic anemia (non-SAA) and healthy donors. The study focused their analysis on the scRNA-seq datasets, whereas the bulk RNA-seq dataset was used for validation [@zhu_single-cell_2021].
+
+In this work, we will focus our analysis on their bulk RNA-seq validation dataset and extend their investigation into expression patterns of non-SAA patients.
+
+------------------------------------------------------------------------
+
+# Dataset Retrieval {#dataset_retrieval}
+
+## Data Information {#data-information}
+
+The three datasets acquired and analyzed by Zhu et al. are openly available on the National Center of Biotechnology Information (NCBI)'s Gene Expression Omnibus (GEO) platform under the SuperSeries "Transcriptome analysis of HSPCs and T cells from aplastic anemia (AA) and healthy donors" (GSE145669). We will focus on the SubSeries "Bulk RNA-seq of aplastic anemia (AA) and healthy donors" (GSE165870) [@barrett_ncbi_2013; @zhu_single-cell_2021].
+
+This dataset presents raw unnormalized counts data of Lin-CD34+ hematopoietic stem and progenitor cells derived from bone marrow of healthy donors and untreated non-severe aplastic anemia (non-SAA) patients. Clean reads were aligned against the human GRCh38 genome using STAR and gene quantification was performed using HTSeq. Three controls and six non-SAA samples are included in the dataset for a total of nine samples [@zhu_single-cell_2021].
+
+## Data Acquisition {#data_acquisition}
+
+To begin our analysis, we must first import all relevant packages. The `GEOquery` [@davis_geoquery_2007] package will be used to retrieve the dataset from the GEO database; `biomaRt` [@durinck_biomart_2005] to map identifiers; `DESeq2` [@deluca_rna-seqc_2012], `SummarizedExperiment` [@morgan_summarizedexperiment_2025], and `limma` [@ritchie_limma_2015] for principal component analysis (PCA); `edgeR` [@chen_edger_2025] for differential expression analysis; `ggplot2` [@wickham_ggplot2_2016], `ggrepel` [@slowikowski_ggrepel_2024], `pheatmap` [@kolde_pheatmap_2025], `circlize` [@circlize_2014], and `ComplexHeatmap` [@zuguang_2016] for visualizations; and `tidyr` [@wickham_tidyr_2024], `dplyr` [@wickham_dplyr_2023], and `knitr` [@stodden_knitr_2014] for general data manipulation.
+
+```{r, message = FALSE, warning = FALSE}
+library(biomaRt)
+library(circlize)
+library(ComplexHeatmap)
+library(DESeq2)
+library(dplyr)
+library(edgeR)
+library(GEOquery)
+library(ggplot2)
+library(ggrepel)
+library(knitr)
+library(limma)
+library(pheatmap)
+library(SummarizedExperiment)
+library(tidyr)
+```
+
+We use the `GEOquery` [@davis_geoquery_2007] package to fetch the experimental metadata available and inspect the summary as provided. From the results, we confirm that we have accessed the correct experiment.
+
+```{r, message = FALSE, warning = FALSE}
+# Retrieve the experimental metadata from the `GEOquery` package
+gse <- "GSE165870"
+gse_data <- GEOquery::getGEO(gse, GSEMatrix = FALSE)
+
+# Inspect the summary as provided
+gse_data@header$summary
+```
+
+Each dataset provided within the SuperSeries is associated with their own unique GSE Series identifier. For our dataset of interest, only the raw counts are provided. Thus, we can directly use the `GEOquery` [@davis_geoquery_2007] package to download and read the counts matrix from the database. If the file was previously downloaded and exists at the path specified by the code below, it will be imported and loaded into memory.
+
+```{r, message = FALSE, warning = FALSE}
+# Fetch the supplementary file's name; only one is provided
+supplementary_files <- GEOquery::getGEOSuppFiles(gse, fetch_files = FALSE)
+filename <- supplementary_files$fname[1]
+
+# Download the file to the current path if not already found
+download_dir <- file.path(getwd())
+file_path = file.path(download_dir, gse, filename)
+
+if (! file.exists(file_path)) {
+  file <- GEOquery::getGEOSuppFiles(
+    GEO          = gse, 
+    filter_regex = file_name, 
+    base_dir     = download_dir,
+    fetch_files  = TRUE
+  )
+}
+
+# Load the downloaded file as a data.frame
+aa_data <- read.table(file_path, header = TRUE, check.names = TRUE)
+
+cat("Successfully loaded the raw counts data with", ncol(aa_data[, 3:11]), 
+    "samples and", nrow(aa_data), "genes.")
+```
+
+The dataset contains 20234 genes and nine samples, where both Ensembl gene identifiers (`GeneName`) and gene symbols (`GeneSymbol`) are provided. Furthermore, disease state is indicated in the column names of each sample, where the `Ctrl` prefix denotes healthy donors, and `P` denotes an AA sample [@zhu_single-cell_2021]. To verify these mappings, we will manually inspect the metadata in the following subsection.
+
+The experimental design metadata available through GEO designate this dataset as raw counts and do not reference further cleaning, filtering, or normalizing steps [@zhu_single-cell_2021; @barrett_ncbi_2013]. Furthermore, the methodology outlined in the paper does not detail the exact protocol used to prepare the bulk RNA-seq data when it was used to validate their scRNA-seq findings [@zhu_single-cell_2021].
+
+## Metadata Extraction {#metadata_extraction}
+
+Sample metadata is additionally provided by the GEO database and provides information such as disease state, age, and canonical GSM Sample identifiers [@barrett_ncbi_2013]. The `GEOquery` [@davis_geoquery_2007] package is similarly used to retrieve this data and basic string manipulation is used to clean the values to reduce redundancy.
+
+```{r, message = FALSE, warning = FALSE}
+
+# Extract sample metadata from the GEOquery results object
+metadata <- gse_data@gsms
+sample_group <- do.call(rbind, lapply(metadata, FUN = function(x) {
+  c(x@header$title, x@header$characteristics_ch1)
+}))
+
+# Convert sample metadata into a data.frame
+metadata <- as.data.frame(sample_group, stringsAsFactors = FALSE)
+
+# Clean the row and column names to align with the counts data
+colnames(metadata) <- c('sample', 'sex', 'disease_state', 
+                        'surface_markers', 'tissue', 'age')
+rownames(metadata) <- metadata$sample
+
+#Remove column prefixes to improve readibility and reduce redundancy
+metadata[, 'sex']             <- gsub(x           = metadata[, 'sex'], 
+                                      pattern     = 'Sex: ', 
+                                      replacement = '')
+metadata[, 'disease_state']   <- gsub(x           = metadata[, 'disease_state'], 
+                                      pattern     = 'disease state: ', 
+                                      replacement = '')
+metadata[, 'surface_markers'] <- gsub(x           = metadata[, 'surface_markers'], 
+                                      pattern     = 'surface markers: ', 
+                                      replacement = '')
+metadata[, 'tissue']          <- gsub(x           = metadata[, 'tissue'], 
+                                      pattern     = 'tissue: ', 
+                                      replacement = '')
+metadata[, 'age']             <- gsub(x           = metadata[, 'age'], 
+                                      pattern     = 'age: ', 
+                                      replacement = '')
+
+knitr::kable(metadata, caption = "**Table 1:** Sample metadata retrieved from GEO using the `GEOquery` package. Metadata includes disease state, sex, age, tissue source, and surface markers for each sample. String processing was applied to remove redundant prefixes.")
+```
+
+Referencing the metadata, we confirm that sample name prefixes correspond to disease state and that all samples are extracted from Lin -CD34++ hematopoietic stem and progenitor cells derived from bone marrow tissue [@zhu_single-cell_2021]. We will use the `disease_state` column as canonical group membership, rather than sample name prefixes, for downstream analysis.
+
+```{r, message = FALSE, warning = FALSE}
+# Clean up intermediate objects
+rm(gse_data, sample_group, supplementary_files, download_dir, file_path, 
+   filename, gse)
+```
+
+------------------------------------------------------------------------
+
+# Data Cleaning {#table-cleaning}
+
+The dataset we have fetched has provided raw counts data, thus we must perform several steps of cleaning, filtering, and evaluation before we proceed with differential expression analysis. First, we must begin by parsing the raw counts and metadata dataframes into a standardized format.
+
+## Table Parsing {#table-parsing}
+
+Standardized naming conventions is crucial for maintaining well-documented and human-readable code. Thus, we will begin our cleaning by normalizing the column names of the raw counts dataframe to pot-hole style to align with the metadata. Note that we will leave the sample names as-is to align with their corresponding metadata entries. Furthermore, we will set the Ensembl gene identifiers as the rownames to support downstream manipulations.
+
+```{r, message = FALSE, warning = FALSE}
+
+# Rename the data columns into pot-hole style
+aa_data <- dplyr::rename(aa_data, gene_id = GeneName, gene_symbol = GeneSymbol)
+rownames(aa_data) <- aa_data$gene_id
+knitr::kable(head(aa_data), caption = "**Table 2:** Raw counts data standardized for human-readable naming conventions (`gene_id` and `gene_symbol`) to align with metadata, with Ensembl gene identifiers set as rownames to facilitate downstream analysis. Sample column names were left unchanged to maintain correspondence with metadata entries.")
+```
+
+## Removing Lowly Expressed Genes {#removing-lowly-expressed-genes}
+
+With the parsed dataset, we can now consider if removing lowly expressed genes is needed. The Zhu et al. paper did not specify whether or not lowly expressed genes were removed, nor any related thresholds used for filtering. More broadly, exact methodology on how the bulk RNA-seq dataset was cleaned was neither mentioned in the original publication, supplementary information, or GEO experimental design metadata [@zhu_single-cell_2021'; @barrett_ncbi_2013].
+
+Removing lowly expressed genes is important because genes with consistently low counts across many samples contribute mostly technical noise, violate assumptions of count-based differential expression models, and increase the multiple testing burden. However, low counts are not inherently problematic. For example, a gene only being expressed in one condition may be biologically meaningful, but genes undetected in most samples add little signal [@conesa_survey_2016; @sha_effect_2015-1].
+
+Therefore, we must analyze the distribution of raw counts to guide filtering and will remove genes not expressed in at least three samples, corresponding to the size of our smallest disease group, before proceeding with downstream quality control analysis.
+
+### Distribution Analysis {#distribution-analysis}
+
+We begin with a preliminary assessment of the count distribution to characterize sample-level expression profiles and evaluate the impact of filtering lowly expressed genes. Specifically, per-sample summary statistics, including the minimum, maximum, mean, and interquartile range (IQR), are computed to assess distributional properties prior to downstream quality control and differential expression analysis.
+
+```{r, message = FALSE, warning = FALSE}
+
+# Summarize per-sample distributions
+raw_counts <- aa_data[3:11]
+knitr::kable(
+  data.frame(do.call(cbind, lapply(raw_counts, summary))),
+  caption = "**Table 3:** Summary statistics of raw gene counts per sample, including minimum, first quartile, median, mean, third quartile, and maximum. Many genes have zero or low counts, highlighting the prevalence of lowly expressed genes and providing a baseline for filtering decisions.")
+```
+
+Across all samples, the minimum and first quartile of the gene-level count distributions are zero, indicating that a substantial fraction of genes are either unexpressed or expressed at very low levels. A density plot further visualizes the distribution of log10-transformed counts across samples.
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 1:** Distribution of log10-transformed gene-level counts across samples. Grey lines represent individual sample densities; coloured densities show pooled distributions by disease state (green: healthy controls; orange: non-SAA). Many genes are unexpressed or lowly expressed, while overall expression patterns are consistent within disease groups, supporting subsequent filtering and normalization steps."}
+
+# Convert the raw counts to a long format
+counts_long <- raw_counts %>%
+  mutate(gene_id = rownames(raw_counts)) %>%
+  tidyr::pivot_longer(-gene_id, names_to = "sample", values_to = "counts") %>%
+  left_join(metadata[, c("sample", "disease_state")], by = "sample") %>%
+  mutate(log_count = log10(counts + 1))
+
+# Assign distinct colours for each disease state (healthy vs non-SAA)
+disease_state_colours <- c("Ctrl" = "#1b9e77", "non-SAA" = "#d95f02")
+
+# Visualize the counts distribution as a density plot
+ggplot2::ggplot() +
+  ggplot2::geom_density(data = counts_long, color = "grey", alpha = 0.5,
+                        ggplot2::aes(x = log_count, group = sample)) +
+  ggplot2::geom_density(data = counts_long, alpha = 0.3, size = 1,
+                        ggplot2::aes(x = log_count, color = disease_state, 
+                                     fill = disease_state)) +
+  ggplot2::scale_color_manual(name = "Disease State", values = disease_state_colours) +
+  ggplot2::scale_fill_manual(name = "Disease State", values = disease_state_colours) +
+  ggplot2::xlab("Log10(count + 1) per gene") +
+  ggplot2::ylab("Density") +
+  ggplot2::ggtitle(
+    "Distribution of Raw Gene Counts Across Samples",
+    subtitle = "Grey lines: individual samples; coloured densities: pooled by disease state") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 10)),
+    axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+    legend.title = ggplot2::element_text(size = 11, hjust = 0.5),
+    legend.text = ggplot2::element_text(size = 10),
+    plot.title = ggplot2::element_text(size = 16, hjust = 0.5),
+    plot.subtitle = ggplot2::element_text(size = 10, hjust = 0.5)
+  )
+```
+
+The density plots show a pronounced peak at zero, reflecting the high prevalence of unexpressed or very lowly expressed genes, followed by a steep decline for moderately expressed genes. This pattern reinforces the rationale for filtering lowly expressed genes prior to downstream analyses, as these genes are unlikely to provide reliable signal and may contribute noise to differential expression testing [@conesa_survey_2016].
+
+To complement the distributional assessment, we next examine gene detection across samples to determine how consistently each gene is expressed. This helps identify genes that are rarely detected or expressed in only a subset of samples, providing an additional criterion for filtering lowly expressed genes before downstream differential expression analysis [@conesa_survey_2016].
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 2:** Number of genes detected per sample (counts ≥ 1). Bars are coloured by disease state (green: controls; orange: non-SAA). Most genes are consistently detected across samples (~12,000 genes), whereas a minority are unexpressed or detected in few samples, informing the selection of filtering thresholds prior to differential expression analysis."}
+
+# Define detection as having at least one count
+counts_long$detected <- counts_long$counts >= 1
+
+# Summarize the number of detected genes per sample
+gene_detection <- stats::aggregate(
+  detected ~ sample, 
+  data = counts_long, 
+  FUN = sum
+)
+
+# Add disease state for colouring
+gene_detection <- dplyr::left_join(
+  gene_detection, metadata %>% dplyr::select(sample, disease_state),
+  by = "sample"
+)
+
+# Visualize a barplot of genes detected per sample
+ggplot2::ggplot(gene_detection, ggplot2::aes(x = sample, y = detected, 
+                                             fill = disease_state)) +
+  ggplot2::geom_bar(stat = "identity") +
+  ggplot2::scale_fill_manual(name = "Disease State", values = disease_state_colours) +
+  ggplot2::labs(
+      title = "Gene Detection Across Samples",
+      subtitle = "Number of genes with counts ≥ 1",
+      x = "Sample",
+      y = "Number of detected genes"
+  ) +
+  ggplot2::theme_classic(base_size = 11) +
+  ggplot2::theme(
+      plot.title    = ggplot2::element_text(hjust = 0.5, size = 14),
+      plot.subtitle = ggplot2::element_text(hjust = 0.5, size = 11),
+      axis.title.x  = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
+      axis.title.y  = ggplot2::element_text(margin = ggplot2::margin(r = 12)),
+      axis.text.x   = ggplot2::element_text(size = 10, hjust = 0.5),
+      axis.text.y   = ggplot2::element_text(size = 10),
+      legend.position = "none"
+  )
+```
+
+Gene detection across samples is relatively consistent, with approximately 12000 genes detected per sample. This indicates that the majority of genes are expressed in multiple samples, while the remaining genes are largely unexpressed or detected in very few samples. Such consistency supports the use of a filtering threshold to remove lowly expressed genes prior to downstream differential expression analysis, minimizing noise while retaining reliably measured genes [@sha_effect_2015-1].
+
+Overall, our distributional assessment highlights a substantial fraction of unexpressed or lowly expressed genes, while gene detection is consistent across samples. These observations justify applying a threshold to filter lowly expressed genes before quality assessment, normalization, and differential expression analysis.
+
+### Gene Filtering {#gene-filtering}
+
+The `edgeR` [@chen_edger_2025] package is used to filter out genes with low expression, retaining only those expressed in at least three samples. Ensembl gene identifiers are used for filtering to ensure uniqueness, as gene symbols have not yet been validated.
+
+```{r, message = FALSE, warning = FALSE}
+# Initialize a DGEList and the model design
+dge <- edgeR::DGEList(counts = raw_counts, group = metadata$disease_state)
+design <- stats::model.matrix(~ disease_state, data = metadata)
+
+# Filter by expression using a minimum of three samples
+keep <- edgeR::filterByExpr(dge, design)
+filtered_dge <- dge[keep, , keep.lib.sizes = FALSE]
+
+# Filter our original data object
+aa_data <- aa_data[rownames(aa_data) %in% rownames(filtered_dge$counts), ]
+
+# Evaluate the retention percentage
+retention <- nrow(aa_data) / nrow(dge) * 100
+cat("Retained", retention, "per cent of genes:", 
+    nrow(dge), "original,", nrow(aa_data), "result")
+```
+
+After filtering lowly expressed genes, 10984 of 20234 genes were retained, corresponding to 54.3% of the original dataset. This indicates that roughly half of the genes had insufficient expression across samples to be reliably analyzed, supporting the use of a minimum-sample threshold to reduce technical noise while preserving genes with potential biological relevance.
+
+Let us perform a final inspection of the summary statistics per sample post-removal.
+
+```{r, message = FALSE, warning = FALSE}
+
+knitr::kable(
+  data.frame(do.call(cbind, lapply(aa_data[3:11], summary))),
+  caption = "**Table 4:** Summary statistics of gene counts per sample after removal of lowly expressed genes. While the minimum remains zero, the first quartile and mean have increased, reflecting the removal of low-count genes and resulting in a dataset with higher overall expression levels and reduced technical noise."
+)
+```
+
+After filtering lowly expressed genes, the minimum count remains zero, but the first quartile and mean have increased substantially. This reflects the removal of many low-count genes, resulting in a dataset with higher overall expression levels and reduced technical noise, which is more suitable for downstream differential expression analysis [@conesa_survey_2016].
+
+Now that we have successfully removed lowly expressed genes from our dataset, we can proceed with further cleaning and downstream analysis.
+
+```{r, message = FALSE, warning = FALSE}
+# Clean intermediate objects; we'll keep design for later
+rm(dge, filtered_dge, gene_detection, counts_long, raw_counts, colours, keep, 
+   retention)
+```
+
+## Identifier Mapping {#identifier-mapping}
+
+Although gene symbols are provided in the dataset, no documentation on how they were generated or validated is available. To ensure consistency with current HGNC annotations and account for possible outdated aliases or removed entries, all genes will be remapped using the `biomaRt` [@durinck_biomart_2005] package [@durinck_mapping_2009].
+
+```{r, message = FALSE, warning = FALSE}
+
+# Drop the provided gene symbols to remap them to ensure consistency
+aa_data$gene_symbol <- NULL
+
+# Strip Ensembl version suffixes
+strip_ensembl_version <- function(ids) { sub("\\.\\d+$", "", ids) }
+ensembl_ids <- unique(strip_ensembl_version(aa_data$gene_id))
+
+# Retrieve current HGNC mappings
+ensembl <- biomaRt::useMart(
+  "ensembl", 
+  dataset = "hsapiens_gene_ensembl",
+  host = "https://www.ensembl.org"
+)
+map <- biomaRt::getBM(
+  attributes = c("ensembl_gene_id", "hgnc_symbol"),
+  filters = "ensembl_gene_id",
+  values = ensembl_ids,
+  mart = ensembl
+)
+
+# Join the mapping to the original data
+aa_data <- aa_data %>% 
+  mutate(ensembl_gene_id = strip_ensembl_version(.data$gene_id)) %>%
+  left_join(map, by = "ensembl_gene_id") %>%
+  dplyr::rename(gene_symbol = hgnc_symbol) %>%
+  dplyr::select(gene_id, gene_symbol, everything())
+
+knitr::kable(
+  head(aa_data),
+  caption = "**Table 5:** Remapping of Ensembl gene identifiers to current HGNC symbols. Original gene symbols were removed to ensure consistency and alignment with current annotations, and Ensembl version suffixes were stripped prior to mapping. The resulting `gene_symbol` column reflects updated, standardized gene names suitable for downstream analyses and consistent cross-referencing with public databases."
+)
+```
+
+The mapping is summarized to assess whether all Ensembl gene identifiers were successfully assigned an HGNC symbol and to identify any cases of multi-mapped symbols.
+
+```{r, message = FALSE, warning = FALSE}
+
+# Summarize the total number of Ensembl gene IDs that were able to be mapped 
+n_ensembl_total <- aa_data %>% distinct(gene_id) %>% nrow()
+n_mapped <- aa_data %>% filter(! is.na(gene_symbol), gene_symbol != "") %>% 
+  distinct(gene_id) %>% nrow()
+n_unmapped <- n_ensembl_total - n_mapped
+
+# Summarize duplicate mappings in Ensembl gene IDs and HGNC symbols
+id_duplicates <- aa_data %>% 
+  group_by(gene_id) %>%
+  summarize(n_hgnc = n_distinct(gene_symbol), .groups = "drop") %>%
+  filter(n_hgnc > 1) %>%
+  nrow()
+
+symbol_duplicates <- aa_data %>% 
+  filter(! is.na(gene_symbol), gene_symbol != '') %>%
+  group_by(gene_symbol) %>% 
+  summarize(n_ensembl = n_distinct(gene_id), .groups = "drop") %>%
+  filter(n_ensembl > 1) %>%
+  nrow()
+
+# Summarize multi-mappings (rare)
+multi_mapped <- aa_data %>%
+  filter(! is.na(gene_symbol), grepl(";", gene_symbol)) %>%
+  nrow()
+
+# Visualize the results as a data.frame
+knitr::kable(tibble::tibble(
+  category = c("Total Ensembl Gene ID",
+               "Total mapped gene ID",
+               "Total unmapped gene ID",
+               "Duplicate gene ID mappings",
+               "Duplicate gene symbol mappings",
+               "Multi-mapped gene symbols"),
+  n        = c(n_ensembl_total,
+               n_mapped,
+               n_unmapped,
+               id_duplicates,
+               symbol_duplicates,
+               multi_mapped),
+  ), caption = "**Table 6:** Summary of Ensembl-to-HGNC gene identifier mapping."
+)
+```
+
+After remapping, no duplicate gene IDs, duplicate symbols, or multi-mapped entries were detected. However, 27 gene identifiers could not be mapped to a current HGNC symbol. To diagnose this, we evaluate common cases regarding the Ensembl gene identifier [@yates_ensembl_2026].
+
+```{r, message = FALSE, warning = FALSE}
+
+# Identify unmapped Ensembl gene IDs with the version stripped
+unmapped_ids <- aa_data %>%
+  filter(is.na(gene_symbol) | gene_symbol == '') %>%
+  mutate(gene_id = strip_ensembl_version(.data$gene_id)) %>%
+  pull(gene_id) %>%
+  unique()
+
+# Diagnose the reason that mapping failed
+unmapped <- tibble::tibble(id = unmapped_ids) %>%
+  mutate(type = case_when(
+    grepl("^ENSG\\d+$", id) ~ "Ensembl gene ID (ENSG)",
+    grepl("^ENSG\\d+\\.\\d+$", id) ~ "Ensembl gene ID with version (ENSG.x) — needs stripping",
+    grepl("^ENST\\d+", id) ~ "Ensembl transcript ID (ENST) — wrong target for gene mapping",
+    grepl("^ENSP\\d+", id) ~ "Ensembl protein ID (ENSP) — wrong target",
+    grepl("^ENS.*G\\d+", id) ~ "Non-human Ensembl gene (e.g., ENSMUSG...) — wrong organism",
+    grepl("^ERCC-", id) ~ "ERCC spike-in control — not a gene",
+    grepl("^MT-|^mt-", id) ~ "Mitochondrial gene symbol (not Ensembl ID) — different ID system",
+    grepl("^\\d+$", id) ~ "Entrez Gene ID — different ID system",
+    TRUE ~ "Other / unknown format"
+  ))
+
+knitr::kable(head(unmapped), caption = "**Table 7:** Classification of unmapped Ensembl gene identifiers.")
+```
+
+We confirm that all unmapped Ensembl gene identifiers were syntactically valid but either retired or deprecated in the current release. These entries will be retained but flagged as unmapped (`NA`).
+
+We are expected to produce a matrix with gene symbols as rownames; however, as discussed on the course board, gene symbols should be left as `NA` when the corresponding Ensembl ID could not be mapped [@isserlin_2026]. To maintain unique and non-empty row identifiers for downstream analysis, Ensembl IDs were used as a fallback for these unmapped genes while still preserving the NA annotation in the gene_symbol column [@yates_ensembl_2026; @durinck_mapping_2009].
+
+```{r, message = FALSE, warning = FALSE}
+
+# Create a column to use as rownames: HGNC if available, else Ensembl ID
+aa_data <- aa_data %>%
+  mutate(row_id = if_else(!is.na(gene_symbol) & gene_symbol != "", 
+                          gene_symbol, gene_id))
+
+# Set rownames for expression matrices
+rownames(aa_data) <- aa_data$row_id
+aa_data$row_id <- NULL
+
+# Drop the ensembl gene ID row made without version numbers
+aa_data$ensembl_gene_id <- NULL
+
+knitr::kable(
+  head(aa_data),
+  caption = "**Table 8:** Final gene annotation for the expression matrix. Row names were set to HGNC symbols where available; for genes without a mapped HGNC symbol, the Ensembl gene ID was used as a fallback while preserving `NA` in the `gene_symbol` column. This approach ensures unique, non-empty row identifiers for downstream analyses while retaining annotation information for unmapped genes."
+)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Clean up intermediate objects
+rm(ensembl, expr_mapped, map, unmapped, ensembl_ids, id_duplicates,
+   multi_mapped, n_ensembl_total, n_mapped, n_unmapped, symbol_duplicates,
+   unmapped_ids, strip_ensembl_version)
+```
+
+## Quality Assessment {#quality-assessment}
+
+Before normalization and outlier detection, it is essential to assess the quality of the raw count data [@isserlin_2026]. Quality assessment identifies technical artifacts, sample-level biases, and abnormal distributions that could confound downstream analyses. Performing these checks prior to normalization ensures that observed differences are biologically meaningful rather than driven by low-quality samples or extreme counts, and that subsequent normalization and filtering steps are applied to a reliable dataset [@conesa_survey_2016].
+
+### Data Integrity {#data-integrity}
+
+First, let us evaluate if any non-numeric or null values exist in our dataset.
+
+```{r, message = FALSE, warning = FALSE, fig.}
+raw_counts <- aa_data[3:11]
+
+# Assert that no non-numeric values exist in the data
+is_numeric <- !all(sapply(raw_counts, is.numeric))
+
+# Evaluate if any NAs exist in the data
+is_missing <- any(is.na(raw_counts))
+
+knitr::kable(tibble::tibble(
+  category = c("Contains non-numeric values", "Contains missing values"),
+  n        = c(is_numeric, is_missing)),
+  caption = "**Table 9:** Data integrity check."
+)
+```
+
+We confirm that no invalid values exist in our dataset, let us move on.
+
+### Library Size {#library-size}
+
+Next, we will evaluate sequencing depth and overall coverage by quantifying the total number of reads per sample. Inspecting it helps identify samples with unusually low or high counts, which could bias normalization and differential expression analyses if left uncorrected [@deluca_rna-seqc_2012]. We will use a barplot to visualize library size per sample and identify potential outliers in our dataset.
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 3:** Library sizes across samples. Total counts per sample are visualized as a barplot, colored by disease state. Moderate variation is observed, with some control samples below or above the average library size, while disease samples cluster between approximately 2–4 million reads."}
+
+# Compute library sizes per sample
+library_sizes <- data.frame(
+  sample        = metadata$sample, 
+  disease_state = metadata$disease_state,
+  library_size  = colSums(raw_counts)
+)
+
+# Visualize library sizes as a barplot
+ggplot2::ggplot(library_sizes, ggplot2::aes(x = sample, y = library_size, 
+                                            fill = disease_state)) +
+  ggplot2::geom_bar(stat = "identity", color = "black") +
+  ggplot2::scale_fill_manual(name = "Disease State", values = disease_state_colours) +
+  ggplot2::ylab("Total counts per sample") +
+  ggplot2::xlab("Sample") +
+  ggplot2::ggtitle("Library Sizes Across Samples") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 10)),
+    axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+    legend.title = ggplot2::element_text(size = 12, hjust = 0.5),
+    legend.text = ggplot2::element_text(size = 10),
+    plot.title = ggplot2::element_text(size = 16, hjust = 0.5)
+  )
+```
+
+We see moderate variation in total counts across samples, but interpretation should be cautious due to the small sample size. Among the three controls `Ctrl7` is moderately below the average library size, whereas `Ctrl2` has over twice the average, flagging both as potential outliers that may require further investigation. The non-SAA (disease) samples cluster between two million and four million, and overall, no sample exhibits extreme under- or over-sequencing, though normalization will need to account for these differences.
+
+### Detection Rate {#detection-rate}
+
+To complement our previous measure of library quality, we will evaluate detection rate by quantifying the number of genes with non-zero counts per sample. Evaluating detection rates help identify samples with unusually low coverage or poor complexity, which could bias downstream analyses and ensure that all retained samples reliably capture the transcriptome before downstream processing and analyses [@deluca_rna-seqc_2012]. We will similarly use a barplot to visualize detection rate per sample.
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 4:** Gene detection across samples. The number of genes with non-zero counts per sample is shown as a barplot, colored by disease state. Detection rates are generally uniform, with most samples detecting ~10,000 genes. Control samples `Ctrl2` and `Ctrl7` deviate moderately, consistent with library size observations, indicating potential outliers to monitor during normalization and quality control."}
+
+# Compute detection rate: number of genes with counts > 0 per sample
+detection <- data.frame(
+  sample = metadata$sample,
+  disease_state = metadata$disease_state,
+  detected_genes = colSums(raw_counts > 0)
+)
+
+# Plot detection rate per sample
+ggplot2::ggplot(detection, ggplot2::aes(x = sample, y = detected_genes, 
+                                           fill = disease_state)) +
+  ggplot2::geom_bar(stat = "identity", color = "black") +
+  ggplot2::scale_fill_manual(name = "Disease State", values = disease_state_colours) +
+  ggplot2::ylab("Number of genes detected") +
+  ggplot2::xlab("Sample") +
+  ggplot2::ggtitle("Detection Rate Across Samples") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 10)),
+    axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+    legend.title = ggplot2::element_text(size = 12, hjust = 0.5),
+    legend.text = ggplot2::element_text(size = 10),
+    plot.title = ggplot2::element_text(size = 16, hjust = 0.5)
+  )
+```
+
+We see generally uniform gene detection per sample across both disease groups, with most samples detecting approximately 10000 genes. This consistency aligns with the library size assessment, where most samples clustered around moderate total counts, though `Ctrl2` and `Ctrl7` were flagged as potential outliers. Overall, the relatively stable detection rates suggest adequate coverage for downstream analysis, but the flagged samples should still be monitored during normalization and quality control.
+
+### Count Distribution {#count-distribution}
+
+With lowly expressed genes already removed, examining the distribution of counts allows us to assess the remaining sample-level expression patterns, evaluate library composition, and identify any residual technical biases [@deluca_rna-seqc_2012]. We will use density plots, similar to our initial assessment when removing lowly expressed genes, to visualize the distribution of raw counts per sample.
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 5:** Distribution of gene counts across samples after filtering lowly expressed genes. Log10-transformed counts per gene are shown as density plots, with grey lines for individual samples and colored densities pooled by disease state. Most genes are expressed at log10(count + 1) ≈ 2, with non-SAA samples showing a slightly narrower peak and controls a broader distribution. Outlier behavior is observed in Ctrl7, with a minor secondary peak, consistent with previous library size and detection rate assessments."}
+
+# Convert the raw counts to a long format for plotting
+counts_long <- raw_counts %>%
+  mutate(gene_id = rownames(raw_counts)) %>%
+  tidyr::pivot_longer(-gene_id, names_to = "sample", values_to = "counts") %>%
+  left_join(metadata[, c("sample", "disease_state")], by = "sample") %>%
+  mutate(log_count = log10(counts + 1))
+
+# Visualize the counts distribution as a density plot
+ggplot2::ggplot() +
+  ggplot2::geom_density(data = counts_long, color = "grey", alpha = 0.5,
+                        ggplot2::aes(x = log_count, group = sample)) +
+  ggplot2::geom_density(data = counts_long, alpha = 0.3, size = 1,
+                        ggplot2::aes(x = log_count, color = disease_state, 
+                                     fill = disease_state)) +
+  ggplot2::scale_color_manual(name = "Disease State", values = disease_state_colours) +
+  ggplot2::scale_fill_manual(name = "Disease State", values = disease_state_colours) +
+  ggplot2::xlab("Log10(count + 1) per gene") +
+  ggplot2::ylab("Density") +
+  ggplot2::ggtitle(
+    "Distribution of Gene Counts Across Samples",
+    subtitle = "Grey lines: individual samples; coloured densities: pooled by disease state") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 10)),
+    axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+    legend.title = ggplot2::element_text(size = 11, hjust = 0.5),
+    legend.text = ggplot2::element_text(size = 10),
+    plot.title = ggplot2::element_text(size = 16, hjust = 0.5),
+    plot.subtitle = ggplot2::element_text(size = 10, hjust = 0.5)
+  )
+```
+
+The log10-transformed gene count distributions for control and non-SAA samples both peak near 2, indicating that most genes are expressed in this range. Non-SAA samples exhibit a slightly higher and narrower peak, whereas controls have a broader distribution with increased density near 0.5, reflecting a larger proportion of moderately expressed genes. The right-hand tail is similar across both groups, suggesting comparable representation of highly expressed genes.
+
+Among the potential outliers previously flagged for further investigation, `Ctrl2` shows a standard distribution consistent with the group, whereas `Ctrl7` exhibits an outlier profile, with a primary peak around 0.75 and a minor secondary peak. The sample's atypical expression patterns further suggest that it behaves as an outlier from the healthy controls and warrants further investigation.
+
+### Principal Component Analysis {#principal-component-analysis}
+
+Finally, we will use the `DESeq2` package to perform principal component analysis (PCA) to provide a global, unsupervised view of the dataset, summarizing major sources of variation across samples. Performing PCA prior to differential expression analysis helps identify batch effects, outliers, or unexpected clustering, ensuring that downstream analyses focus on biologically meaningful differences rather than technical artifacts [@chen_robust_2020]. Specifically, PCA will allow us to investigate whether `Ctrl7` separates as a true outlier from the rest of the control samples.
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 6:** Principal component analysis of variance-stabilized counts. Samples are plotted on the first two principal components, with points colored by disease state and labeled by sample. PC1 and PC2 explain 39.9% and 18.1% of the variance, respectively. Controls cluster tightly together, whereas non-SAA samples show greater heterogeneity, forming two subclusters and two additional dispersed points. Notably, `Ctrl7` separates along PC1 by ~150 units from the main control cluster, consistent with its unusual library size and count distribution, suggesting it may represent a technical or biological outlier."}
+
+# Create a DESeq matrix to compute the PCA
+dds <- DESeq2::DESeqDataSetFromMatrix(countData = raw_counts,
+                              colData = metadata,
+                              design = ~ disease_state)
+
+# Perform a variance-stabilizing transformation
+vsd <- DESeq2::vst(dds, blind = TRUE)
+
+# Compute PCA
+pca <- stats::prcomp(t(SummarizedExperiment::assay(vsd)))
+percent_var <- (pca$sdev ^ 2) / sum(pca$sdev ^ 2) * 100
+                     
+pca <- data.frame(PC1 = pca$x[, 1], PC2 = pca$x[, 2],
+                  sample = colnames(vsd),
+                  disease_state = colData(vsd)$disease_state)
+
+# Visualize the PCA
+ggplot2::ggplot(pca, ggplot2::aes(x = PC1, y = PC2, color = disease_state, 
+                                  label = sample)) +
+  ggplot2::geom_point(size = 4, alpha = 0.8) +
+  ggrepel::geom_text_repel(size = 3, nudge_y = 6) +
+  ggplot2::scale_color_manual(name = "Disease State", values = disease_state_colours) +
+  ggplot2::xlab(paste0("PC1: ", round(percent_var[1], 1), "% variance")) +
+  ggplot2::ylab(paste0("PC2: ", round(percent_var[2], 1), "% variance")) +
+  ggplot2::ggtitle("PCA of Variance-Stabilized Counts",
+                    subtitle = "Pre-removal of Ctrl2 as an outlier") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(hjust = 0.5, size = 16),
+    legend.text = ggplot2::element_text(size = 10),
+    plot.subtitle = ggplot2::element_text(hjust = 0.5)
+  )
+```
+
+We see that `Ctrl2` and `Ctrl8` cluster together, consistent with their expected control profiles, while the non-SAA samples show greater variability, forming two tight subclusters and two additional dispersed points. The first principal component accounts for 39.9% of variability and the second accounts for 18.1%.
+
+While we should interpret clustering behaviour cautiously due to the low sample size, `Ctrl7` clearly separates along the first principal component, approximately 150 units from the main cluster at the origin, confirming its atypical expression profile. While the magnitude of this separation alone is not definitive to assign outlier status, this separation, combined with the unusual library size and distinctive count distribution previously observed, indicates that `Ctrl7` deviates from the expected sample behaviour and may represent a technical or biological outlier [@chen_robust_2020].
+
+## Outlier Removal {#outlier-removal}
+
+Although we only have nine total samples, including three controls, multiple quality assessments consistently indicate that `Ctrl7` behaves atypically. Removing this sample would reduce the number of control replicates to two, so the decision must be considered carefully [@schurch_how_2016]. The Zhu et al. paper did not mention any methodology regarding quality assessment results or outlier removal protocol for the bulk RNA-seq dataset, thus we will proceed with our own judgement and analysis results [@zhu_single-cell_2021].
+
+The persistent deviation of `Ctrl7` across all quality measures suggests that retaining it could introduce technical bias into downstream analyses. Therefore, we will proceed with its removal, while noting the reduced replication, to preserve the integrity and interpretability of differential expression results.
+
+```{r, message = FALSE, warning = FALSE}
+# Remove the technical outlier from the counts data and metadata
+aa_data$Ctrl7 <- NULL
+metadata <- metadata[!(metadata$sample == "Ctrl7"), ]
+
+knitr::kable(
+  head(aa_data),
+  caption = "**Table 10:** Expression matrix after removal of the outlier sample `Ctrl7.` Removing this sample reduces the number of control replicates from three to two but eliminates a technical deviation consistently observed across quality assessments."
+)
+```
+
+Let us visualize the dataset using a PCA plot to confirm the results of the outlier removal.
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 7:** Principal component analysis of variance-stabilized counts after removal of the outlier sample `Ctrl7.` Samples are plotted on the first two principal components, with points colored by disease state and labeled by sample. PC1 and PC2 explain the majority of variance. Controls now cluster tightly together, while non-SAA samples continue to show heterogeneous substructure."}
+
+# Fetch the raw counts from the subsetted data
+raw_counts <- aa_data[3:10]
+
+# Reconstruct the DESeq2 object with the subsetted data
+design <- stats::model.matrix(~ disease_state, data = metadata)
+dds <- DESeq2::DESeqDataSetFromMatrix(countData = raw_counts,
+                              colData = metadata,
+                              design = ~ disease_state)
+
+# Perform a variance-stabilizing transformation
+vsd <- DESeq2::vst(dds, blind = TRUE)
+
+# Compute PCA
+pca <- stats::prcomp(t(SummarizedExperiment::assay(vsd)))
+percent_var <- (pca$sdev ^ 2) / sum(pca$sdev ^ 2) * 100
+                     
+pca <- data.frame(PC1 = pca$x[, 1], PC2 = pca$x[, 2],
+                  sample = colnames(vsd),
+                  disease_state = colData(vsd)$disease_state)
+
+# Compute PCA
+pca <- stats::prcomp(t(SummarizedExperiment::assay(vsd)))
+percent_var <- (pca$sdev ^ 2) / sum(pca$sdev ^ 2) * 100
+                     
+pca <- data.frame(PC1 = pca$x[, 1], PC2 = pca$x[, 2],
+                  sample = colnames(vsd),
+                  disease_state = colData(vsd)$disease_state)
+
+# Visualize the PCA
+ggplot2::ggplot(pca, ggplot2::aes(x = PC1, y = PC2, color = disease_state, 
+                                  label = sample)) +
+  ggplot2::geom_point(size = 4, alpha = 0.8) +
+  ggrepel::geom_text_repel(size = 3, nudge_y = 4) +
+  ggplot2::scale_color_manual(name = "Disease State", values = disease_state_colours) +
+  ggplot2::xlab(paste0("PC1: ", round(percent_var[1], 1), "% variance")) +
+  ggplot2::ylab(paste0("PC2: ", round(percent_var[2], 1), "% variance")) +
+  ggplot2::ggtitle("PCA of Variance-Stabilized Counts",
+                   subtitle = "Post-removal of Ctrl2 as an outlier") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(hjust = 0.5, size = 16),
+    legend.text = ggplot2::element_text(size = 10),
+    plot.subtitle = ggplot2::element_text(hjust = 0.5)
+  )
+```
+
+We confirm that after removal of `Ctrl2` as an outlier, the dataset variance has stabilized. Therefore, we conclude that the final coverage of our dataset is `10984` genes across eight samples.
+
+```{r, message = FALSE, warning = FALSE}
+# Clean up intermediate objects
+rm(counts_long, dds, detection, library_sizes, pca, raw_counts, vsd, is_missing,
+   is_numeric, percent_var)
+```
+
+------------------------------------------------------------------------
+
+# Normalization {#normalization}
+
+Normalization must be performed on the dataset to ensure that observed differences in expression reflect biological variation rather than technical artifacts [@quackenbush_microarray_2002]. We will use trimmed mean of M-values (TMM) normalization because it is specifically designed for bulk RNA-seq count data [@maza_papyro_2016; @noauthor_rnaseq_nodate].
+
+TMM adjusts for differences in library size and compositional biases by calculating scaling factors based on a trimmed mean of log-fold changes, which minimizes the influence of highly expressed or differentially expressed genes. This approach preserves genuine biological variation while ensuring that comparisons across samples are not confounded by technical differences [@maza_papyro_2016].
+
+We will visualize the distribution of the counts before and after normalization to confirm that library-specific biases are mitigated and that samples are comparable for downstream differential expression analysis.
+
+## TMM Transformation {#tmm-transformation}
+
+Let us begin by visualizing the distribution of the pre-normalized dataset using both a boxplot and a density plot. While the class material uses boxplots with outliers explicitly shown beyond the whiskers, here we overlay a violin plot, which visually represents the distribution tails and highlights extreme values in a more continuous manner.
+
+```{r, message = FALSE, warning = FALSE}
+# Convert the counts to a long format
+counts_long <- aa_data %>% 
+  dplyr::select(-gene_id, -gene_symbol) %>%
+  tidyr::pivot_longer(cols = everything(), names_to = "sample",
+                      values_to = "count") %>%
+  dplyr::mutate(disease_state = metadata$disease_state[match(sample, metadata$sample)],
+                log_count = log10(count + 1))
+
+# Visualize the distribution of counts using a boxplot
+ggplot2::ggplot(counts_long, ggplot2::aes(x = sample, y = log_count, fill = disease_state)) +
+  ggplot2::geom_violin(alpha = 0.1, scale = "width") +
+  ggplot2::geom_boxplot(width = 0.3, alpha = 0.7, outlier.shape = NA) +
+  ggplot2::scale_fill_manual(values = disease_state_colours, name = "Disease State") +
+  ggplot2::xlab("Sample") +
+  ggplot2::ylab("Log10(count + 1)") +
+  ggplot2::ggtitle("Distribution of Gene Counts per Sample (Pre-normalization)") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 10)),
+    axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+    legend.position = "top",
+    plot.title = ggplot2::element_text(size = 16, hjust = 0.5)
+  )
+```
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 8:** Pre-normalization distribution of gene counts across samples. (A) Violin plots overlaid with boxplots show the log10-transformed counts per sample, highlighting distribution tails and extreme values. (B) Density plots visualize the distribution of log10-transformed counts per sample, with grey lines representing individual samples and colored densities pooled by disease state."}
+
+# Plot a density plot to visualize counts distribution
+ggplot2::ggplot() +
+  ggplot2::geom_density(data = counts_long, color = "grey", alpha = 0.5,
+                        ggplot2::aes(x = log_count, group = sample)) +
+  ggplot2::geom_density(data = counts_long, alpha = 0.3,
+                        ggplot2::aes(x = log_count, color = disease_state,
+                                     fill = disease_state)) +
+  ggplot2::scale_color_manual(name = "Disease State", values = disease_state_colours) +
+  ggplot2::scale_fill_manual(name = "Disease State", values = disease_state_colours) +
+  ggplot2::xlab("Log10(count + 1) per gene") +
+  ggplot2::ylab("Density") +
+  ggplot2::ggtitle("Distribution of Raw Gene Counts Across Samples",
+    subtitle = "Grey lines: individual samples; coloured densities: pooled by disease state") +
+  ggplot2::theme_classic(base_size = 11) +
+  ggplot2::theme(
+    plot.title    = ggplot2::element_text(hjust = 0.5, size = 16),
+    plot.subtitle = ggplot2::element_text(hjust = 0.5, size = 11),
+    axis.title.x  = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
+    axis.title.y  = ggplot2::element_text(margin = ggplot2::margin(r = 12))
+  )
+```
+
+We will use the `edgeR` [@chen_edger_2025] package to perform sample-based normalization using TMM. Simple library size normalization assumes that that most genes are not differentially expressed across samples, an assumption that is frequently violated in heterogeneous datasets and can bias fold-change estimates. TMM addresses this by computing a weighted, trimmed mean of log-fold changes relative to a reference sample, thereby correcting for library composition effects rather than total counts alone and enabling more accurate cross-sample comparisons [@maza_papyro_2016].
+
+```{r, message = FALSE, warning = FALSE}
+# Create an edgeR object and compute the normalization factors
+dge <- edgeR::DGEList(counts = aa_data, group = metadata$disease_state)
+dge <- edgeR::calcNormFactors(dge, method = "TMM")
+
+# Extract the normalized counts for inspection
+normalized_counts <- data.frame(cpm(dge))
+
+knitr::kable(
+  head(normalized_counts),
+  caption = "**Table 11:** First six rows of gene-level counts after TMM normalization using `edgeR`, showing adjusted expression values across all samples. Normalization accounts for library composition differences for accurate cross-sample comparison."
+)
+```
+
+Now that the data has been TMM normalized, let's visualize the distribution again. We expect both the boxplot–violin plot and the density plot to show improved agreement across samples. Specifically, median expression levels and overall distributional shapes should be aligned, indicating that library size and composition biases have been effectively corrected. Any remaining differences should reflect genuine biological variability rather than technical artifacts, supporting the suitability of the normalized data for downstream comparative analyses [@maza_papyro_2016].
+
+```{r, message = FALSE, warning = FALSE}
+# Convert the counts to a long format
+normalized_long <- normalized_counts %>% 
+  tidyr::pivot_longer(cols = everything(), names_to = "sample",
+                      values_to = "count") %>%
+  dplyr::mutate(disease_state = metadata$disease_state[match(sample, metadata$sample)],
+                log_count = log10(count + 1))
+
+# Visualize the distribution of counts using a boxplot
+ggplot2::ggplot(normalized_long, ggplot2::aes(x = sample, y = log_count, 
+                                              fill = disease_state)) +
+  ggplot2::geom_violin(alpha = 0.1, scale = "width") +
+  ggplot2::geom_boxplot(width = 0.3, alpha = 0.7, outlier.shape = NA) +
+  ggplot2::scale_fill_manual(values = disease_state_colours, name = "Disease State") +
+  ggplot2::xlab("Sample") +
+  ggplot2::ylab("Log10(count + 1)") +
+  ggplot2::ggtitle("Distribution of Gene Counts per Sample (Post-normalization)") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 10)),
+    axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+    legend.position = "top",
+    plot.title = ggplot2::element_text(size = 16, hjust = 0.5)
+  )
+```
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 9:** Distribution of TMM-normalized gene counts across samples (log10-transformed). (A) Boxplot–violin overlay showing median, interquartile range, and distribution tails per sample. (B) Density plot showing individual sample distributions (grey) and pooled disease state densities (coloured)."}
+
+# Plot a density plot to visualize counts distribution
+ggplot2::ggplot() +
+  ggplot2::geom_density(data = normalized_long, color = "grey", alpha = 0.5,
+                        ggplot2::aes(x = log_count, group = sample)) +
+  ggplot2::geom_density(data = normalized_long, alpha = 0.3,
+                        ggplot2::aes(x = log_count, color = disease_state,
+                                     fill = disease_state)) +
+  ggplot2::scale_color_manual(name = "Disease State", values = disease_state_colours) +
+  ggplot2::scale_fill_manual(name = "Disease State", values = disease_state_colours) +
+  ggplot2::xlab("Log10(count + 1) per gene") +
+  ggplot2::ylab("Density") +
+  ggplot2::ggtitle("Distribution of Normalized Gene Counts Across Samples",
+    subtitle = "Grey lines: individual samples; coloured densities: pooled by disease state") +
+  ggplot2::theme_classic(base_size = 11) +
+  ggplot2::theme(
+    plot.title    = ggplot2::element_text(hjust = 0.5, size = 16),
+    plot.subtitle = ggplot2::element_text(hjust = 0.5, size = 11),
+    axis.title.x  = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
+    axis.title.y  = ggplot2::element_text(margin = ggplot2::margin(r = 12))
+  )
+```
+
+We see that the overall shape of the count distributions within each sample is preserved, consistent with TMM acting as a sample-level scaling procedure rather than altering gene-wise relative expression. Across samples, variability is reduced, most notably in the distribution tails, where alignment improves after adjusting for library size and composition differences. A modest shift of the density peaks in log space toward a common central tendency is also observed, reflecting rescaling toward the global average; the limited magnitude of this shift is expected given that the original library sizes were not substantially different.
+
+```{r, message = FALSE, warning = FALSE}
+# Remove intermediate objects
+rm(counts_long, normalized_long)
+```
+
+## Replicate Analysis {#replicate-analysis}
+
+Now that the dataset has been cleaned and normalized, we next assess whether technical replicates are present. Biological replicates are intentionally kept separate to capture true variance for differential expression analysis, but any technical replicates should be resolved. This is typically done by summing counts per biological sample [@schurch_how_2016].
+
+As the metadata does not explicitly indicate replicates, we perform a data-driven check to identify any unusually similar or duplicated samples [@zhu_single-cell_2021]. This analysis is done on the normalized data to reflect true biological similarity rather than differences in library size.
+
+To do this, we generate a pairwise correlation heatmap using the 500 most variable genes, which emphasizes informative variation while reducing noise from low-expression genes.
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 10:** Pairwise Pearson correlation of samples based on the 500 most variable TMM-normalized genes. High correlations indicate potential technical replicates, while lower correlations reflect biological differences between samples."}
+
+# Subset for the top 500 most variable genes
+top_var_genes <- head(order(matrixStats::rowVars(as.matrix(normalized_counts)), 
+                            decreasing = TRUE), 500)
+
+# Compute pair-wise Pearson correlations between samples
+correlation <- stats::cor(normalized_counts[top_var_genes, ], method = "pearson")
+
+# Visualize a heatmap
+pheatmap::pheatmap(
+  correlation,
+  cluster_rows = TRUE,
+  cluster_cols = TRUE,
+  treeheight_row = 0,
+  treeheight_col = 0,
+  clustering_method = "complete",
+  main = "Sample-Sample Correlation Heatmap (Top 500 Most Variable Genes)",
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize = 11,
+  border_color = NA,
+  display_numbers = TRUE
+)
+```
+
+The sample-sample correlation heatmap reveals that the highest correlations are 0.90 (`Ctrl8` - `P19`) and 0.88 (`P18` - `P20`, `Ctrl2` - `P21`). These values are below the typical threshold (0.95-0.99) used to flag technical replicates, indicating that no hidden duplicates or unannotated replicates are present [@godoy_2019].
+
+Some moderate correlations between control and disease samples are expected given the relative homogeneity of the cell population (Lin⁻CD34⁺ bone marrow) [@young_aplastic_2018]. Overall, this analysis confirms that all samples are distinct, and the dataset is ready for downstream differential expression analysis.
+
+```{r, message = FALSE, warning = FALSE}
+# Remove intermediate objects
+rm(correlation, top_var_genes)
+```
+
+------------------------------------------------------------------------
+
+# Differential Gene Expression {#differential-gene-expression}
+
+Now that our dataset is fully quality-controlled, normalized, and verified to contain no hidden replicates or outliers, we can proceed to differential gene expression analysis. This section will focus on identifying genes whose expression differs significantly between the defined disease and control groups.
+
+## Data Separation {#data-separation}
+
+To explore the relationship between samples prior to formal differential expression analysis, we first generate a multidimensional scaling (MDS) plot using `limma` [@ritchie_limma_2015]. This approach summarizes similarities between samples based on their overall expression profiles and allows us to assess whether samples group according to biological characteristics, such as disease state [@maza_papyro_2016].
+
+We expect that samples with similar gene expression patterns will cluster together, providing an initial visual assessment of the main sources of variation in the dataset. To evaluate which factor best explains these patterns, we will generate MDS plots coloured by disease state, sex, and age group, allowing us to compare how each factor contributes to sample clustering [@chen_robust_2020].
+
+```{r, message = FALSE, warning = FALSE}
+# Set colour per disease state
+mds_colours <- disease_state_colours[factor(metadata$disease_state)]
+
+# Generate an MDS plot using limma
+limma::plotMDS(dge, labels = NULL, pch = 19, col = mds_colours)
+
+# Add a legend
+legend(
+  "topright", 
+  legend = levels(factor(metadata$disease_state)),
+  pch = 19,
+  col = disease_state_colours,
+  title = "Disease State",
+  bty = "n",
+  cex = 0.9
+)
+
+mtext(
+  "MDS Plot of RNA-Seq Data Coloured by Disease State",
+  side = 3,
+  line = 1,
+  cex = 1.25
+)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Define colours per sex, rather that disease state
+sex_colours <- c("Male" = "#1f78b4", "Female" = "#e31a1c")
+mds_colours <- sex_colours[factor(metadata$sex)]
+
+# Generate an MDS plot using limma
+limma::plotMDS(dge, labels = NULL, pch = 19, col = mds_colours)
+
+# Add a legend
+legend(
+  "topright", 
+  legend = levels(factor(metadata$sex)),
+  pch = 19,
+  col = disease_state_colours,
+  title = "Sex",
+  bty = "n",
+  cex = 0.9
+)
+
+mtext(
+  "MDS Plot of RNA-Seq Data Coloured by Sex",
+  side = 3,
+  line = 1,
+  cex = 1.25
+)
+```
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 11:** Multidimensional scaling (MDS) of RNA-seq samples illustrating sample similarity. (A) Samples coloured by disease state, showing clear separation between controls and disease samples. (B) Samples coloured by sex, with no distinct clustering observed. (C) Samples coloured by age group, showing minimal separation. Disease state appears to be the primary factor driving sample clustering."}
+
+# Create a binary age factor
+metadata$age_group <- ifelse(metadata$age > 40, ">40", "≤40")
+
+# Define colours for age groups
+age_colours <- c("≤40" = "#1f78b4", ">40" = "#e31a1c")
+mds_colours <- age_colours[metadata$age_group]
+
+# Compute MDS
+limma::plotMDS(dge, labels = NULL, pch = 19, col = mds_colours)
+
+# Add a legend
+legend(
+  "topright",
+  legend = levels(factor(metadata$age_group)),
+  pch = 19,
+  col = age_colours,
+  title = "Age Group",
+  bty = "n",
+  cex = 0.9
+)
+
+mtext(
+  "MDS Plot of RNA-Seq Data Coloured by Age Group",
+  side = 3,
+  line = 1,
+  cex = 1.25
+)
+
+```
+
+The MDS plots coloured by disease state, sex, and age group reveal that disease state provides the clearest separation between samples, with controls clustering tightly and the disease samples showing some internal heterogeneity, including two subclusters and two more distant points. Patterns based on sex or age are less distinct. However, given the small sample size, these observations should be interpreted cautiously.
+
+Despite the within-group variability in the disease samples, disease state remains the primary biological factor of interest. The MDS plots support its inclusion in the model, as it captures the main source of variation between control and disease samples.
+
+## Data Variance {#data-variance}
+
+Next, we will use `edgeR` [@chen_edger_2025] to examine the dispersion of the dataset to assess variability in gene expression across samples. RNA-seq counts are typically modeled using a negative binomial distribution, where the dispersion parameter captures how much observed counts deviate from the mean [@maza_papyro_2016]. Genes with high dispersion may reflect genuine biological variability or technical noise, and understanding this distribution is critical for accurate differential expression analysis.
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 12:** Biological coefficient of variation (BCV) plot for RNA-seq counts estimated using edgeR. The black line shows the common dispersion across all genes, while the red points represent gene-specific (tagwise) dispersions. This visualization summarizes variability across genes and informs the suitability of the negative binomial model for downstream differential expression analysis."}
+
+# Estimate dispersions with edgeR
+dge <- edgeR::estimateDisp(dge, design)
+
+# Plot biological coefficient of variation (BCV)
+edgeR::plotBCV(dge, col.tagwise = "red", col.common = "black", cex.lab = 1, 
+              cex.axis = 0.8, lwd = 1.5)
+
+# Add a main title above the plot
+mtext("Dispersion Plot of RNA-Seq Data", side = 3, line = 1, cex = 1.25)
+```
+
+The BCV plot shows the expected downward trend, with lowly expressed genes exhibiting higher variability and highly expressed genes showing lower relative variation. This pattern further supports the removal of low-expression genes, which contribute disproportionate noise to the dataset. The estimated common dispersion across all genes (\~0.8) is relatively high, but reasonable given the small sample size and the biological heterogeneity observed within the disease group in the MDS plot.
+
+No indications of technical failure or abnormal library effects are evident. With this overview of gene-level variability, we use the `edgeR` [@chen_edger_2025] package to examine the overall distribution of variance across all genes. We aim to assess whether gene-level variance scales appropriate with mean expression, as predicted by the negative binomial model.
+
+Genes that show unusually high or low variance relative to their mean can complicate downstream differential expression analysis and reduce the accuracy of statistical inference [@conesa_survey_2016; @noauthor_no_nodate]. This mean-variance visualization provides a check that the data conforms to the assumption of negative binomial-based modeling, informing our choice in what approach we will use for differential expression analysis.
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 13:** Mean-variance plot of RNA-seq counts showing observed gene-wise variances (black points) and the expected negative binomial trend (blue line). Genes deviating substantially from the trend may indicate extreme biological variability or technical noise."}
+
+# Visualize a mean-variance plot
+edgeR::plotMeanVar(dge, show.raw.vars = TRUE, NBline = TRUE, cex.lab = 1,
+                   cex.axis = 0.8, pch = 19)
+
+# Add a main title above the plot
+mtext("Mean-Variance Plot of RNA-Seq Data", side = 3, line = 2, cex = 1.25)
+
+# Add a subtitle below the plot
+mtext("Blue line: negative binomial trend; Black line: observed mean-variance relationship",
+      side = 3, line = 0.75, cex = 0.85)
+```
+
+The mean-variance plot indicates that gene-level variance in our dataset closely follows the expected negative binomial relationship. Based on this, we will proceed with differential expression analysis using `edgeR` [@chen_edger_2025], which models counts under a negative binomial framework.
+
+## Differential Analysis {#differential-analysis}
+
+We will use the `edgeR` [@chen_edger_2025] package to perform differential gene expression analysis to identify genes whose expression differs between disease and control samples. This analysis uses a negative binomial model to account for count variability across samples.
+
+```{r, message = FALSE, warning = FALSE}
+# Fit the data dispersion to the model and test for DE on the disease state
+fit <- edgeR::glmQLFit(dge, design)
+qlf <- edgeR::glmQLFTest(fit, coef = "disease_statenon-SAA")
+
+# Retrieve the top hits by p-value
+top_hits <- edgeR::topTags(qlf, sort.by = "PValue", n = nrow(normalized_counts))
+top_hits <- as.data.frame(top_hits$table)
+top_hits$gene_symbol <- rownames(top_hits)
+
+knitr::kable(
+  head(top_hits),
+  caption = "**Table 12:** Top differentially expressed genes identified using `edgeR.` Columns include log2 fold change, raw and adjusted p-values, and gene symbols. Genes are ranked by ascending p-value."
+)
+```
+
+Next, we will filter differentially expressed genes using a p-value threshold of 0.05 to identify statistically significant changes. This threshold represents the conventional cutoff for significance in gene expression studies [@noauthor_thresholding_nodate].
+
+```{r, message = FALSE, warning = FALSE}
+dim(top_hits[top_hits$PValue < 0.05, ])
+```
+
+Using the p-value threshold, we identify 819 significantly differentially expressed genes in our dataset.
+
+## Multiple Hypothesis Testing {#multiple-hypothesis-testing}
+
+To account for multiple testing and control the false discovery rate, we use the FDR values already returned by `edgeR` [@chen_edger_2025], which apply the Benjamini–Hochberg (BH) correction [@benjamini_1995]. Genes are considered significant if they meet a threshold of 0.05 for both the FDR and nominal p-value, a standard approach to limit false positives while retaining biologically meaningful signals [@mascha_significance_2018].
+
+```{r}
+knitr::kable(
+  top_hits[top_hits$FDR < 0.05 & top_hits$PValue < 0.05, ],
+  caption = "**Table 12:** Differentially expressed genes with both nominal p-value < 0.05 and FDR < 0.05, indicating statistically significant changes between disease and control samples. Columns include log2 fold change, p-value, FDR, and gene symbol."
+)
+
+```
+
+After applying both the p-value and FDR thresholds, eight genes remain significantly differentially expressed. Given the small sample size and moderate dispersion observed in this dataset, the Benjamini–Hochberg correction is stringent, so obtaining a single-digit number of significant genes is expected [@benjamini_1995; @conesa_survey_2016].
+
+### Volcano Plot {#volcano-plot}
+
+First, we will visualize the significantly differentially expressed genes using a volcano plot. This plot allows us to simultaneously assess up- and down-regulated genes relative to their log-fold changes and significance thresholds (p-value and BH-adjusted FDR), highlighting genes of interest that meet these criteria.
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 14:** Volcano plot of differential expression results comparing non-SAA versus healthy samples. Points are coloured by significance and direction: red = upregulated, blue = downregulated, grey = not significant. Dashed red lines indicate log2 fold-change ±1 and nominal p-value 0.05 thresholds. Genes passing FDR < 0.05 are labelled."}
+
+# Categorize whether a gene is differentially expressed or not by p-value
+top_hits$direction <- "Not Significant"
+top_hits$direction[top_hits$logFC > 1.0 & top_hits$PValue < 0.05] <- "Up"
+top_hits$direction[top_hits$logFC < -1.0 & top_hits$PValue < 0.05] <- "Down"
+
+# Label genes that pass BH correction
+top_hits$label <- NA
+top_hits$label[top_hits$FDR < 0.05] <- top_hits$gene_symbol[top_hits$FDR < 0.05]
+
+# Plot a volcano plot with all annotations
+ggplot2::ggplot(top_hits, ggplot2::aes(x = logFC, y = -log10(PValue), 
+                                       col = direction)) +
+  ggplot2::geom_point(alpha = 0.6, size = 2) +
+  ggplot2::geom_point(data = subset(top_hits, !is.na(label)), shape = 8, 
+                      size = 3) +
+  ggrepel::geom_text_repel(ggplot2::aes(label = label), max.overlaps = 10) +
+  ggplot2::scale_color_manual(values = c("Up" = "red", "Down" = "blue", 
+                                         "Not Significant" = "grey")) +
+  ggplot2::geom_vline(xintercept = c(-1.0, 1.0), col = "red", 
+                      linetype = "dashed") +
+  ggplot2::geom_hline(yintercept = -log10(0.05), col = "red", 
+                      linetype = "dashed") +
+  ggplot2::theme_minimal() +
+  ggplot2::labs(
+    title = "Differential Expression in non-SAA versus Healthy ",
+    subtitle = "Red and blue dashed lines indicate log2 fold-change ±1 and p-value 0.05 thresholds",
+    x = "log2 Fold-Change",
+    y = "-log10(p-value)",
+    color = "Direction"
+  ) +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = ggplot2::element_text(hjust = 0.5, size = 11),
+    axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+    axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 10)),
+    legend.title = ggplot2::element_text(size = 11),
+    legend.text = ggplot2::element_text(size = 10)
+  )
+```
+
+Among the FDR-significant genes, all eight are downregulated, suggesting a consistent repression in the disease state relative to controls. However, this observation should be interpreted cautiously, as the small sample size limits statistical power and the generalizability of these results.
+
+### Heatmap {#heatmap}
+
+Next, we will visualize the top differentially expressed genes using a heatmap to assess how these genes separate samples by disease state. To provide a more informative view, we include all genes with p-value \< 0.05, rather than restricting to the FDR-significant genes, which are very few.
+
+```{r, message = FALSE, warning = FALSE, fig.cap = "**Figure 15:** Heatmap of genes with p-value < 0.05 from differential expression analysis comparing non-SAA versus healthy samples. Rows represent genes (row-scaled as Z-scores) and columns represent samples, split and annotated by disease state. Blue indicates lower expression, red higher expression relative to the row mean."}
+
+# Extract results that pass the p-value threshold
+pval_hits <- rownames(top_hits[top_hits$PValue < 0.05, ])
+
+# Fetch the normalized counts of all p-value significant hits
+pval_counts <- normalized_counts[which(rownames(normalized_counts) %in% pval_hits), ]
+
+# Row-normalize the data
+heatmap_top_hits <- t(scale(t(pval_counts)))
+
+# Create a colour mapping for disease state
+heatmap_col = circlize::colorRamp2(c(min(heatmap_top_hits), 0, max(heatmap_top_hits)),
+                                   c("blue", "white", "red"))
+state_colours <- c("non-SAA" = "#1b9e77", "Ctrl" = "#d95f02")
+
+# Align the metadata to the heatmap columns
+disease_vec <- metadata[colnames(heatmap_top_hits), "disease_state"]
+names(disease_vec) <- colnames(heatmap_top_hits)
+
+# Annotate by disease state
+annotation <- ComplexHeatmap::HeatmapAnnotation(
+  disease_type = disease_vec,
+  col = list(disease_type = state_colours), 
+  show_legend = TRUE,
+  show_annotation_name = FALSE,
+  annotation_legend_param = list(
+    disease_type = list(
+      title = "Disease State"
+    ))
+)
+
+ht <- ComplexHeatmap::Heatmap(
+  as.matrix(heatmap_top_hits),
+  name = "Z-score",
+  col = heatmap_col,
+  top_annotation = annotation,
+  column_split = disease_vec,
+  cluster_rows = TRUE, cluster_columns = TRUE,
+  show_row_dend = FALSE, show_column_dend = FALSE,
+  show_column_names = FALSE, show_row_names = FALSE,
+  heatmap_legend_param = list(title = "Z-score"),
+  column_title = "Differentially Expressed Genes in non-SAA versus Healthy",
+  column_title_gp = grid::gpar(fontsize = 16)
+)
+
+# Plot the heatmap; this will throw 'plot.first' warnings when knitting,
+# but they are benign; happens because we're knitting to HTML and not PDF
+ComplexHeatmap::draw(ht, merge_legend = TRUE)
+```
+
+The heatmap reveals clear condition-associated clustering, with control samples clustering tightly together, indicating high internal consistency and concordant expression patterns across differentially expressed genes. Approximately half of the genes exhibit relatively higher expression in controls, accompanied by uniform but modest repression in disease samples with consistent direction but limited effect sizes.
+
+In contrast, disease samples display greater heterogeneity, forming subgroups rather than a single compact cluster, with the remaining genes showing mixed directions of expression change, likely reflecting biological heterogeneity. However, given the small sample size, these observations are inherently limited and cannot be considered definitive, as reduced statistical power may accentuate apparent variability and constrain robust inference.
+
+```{r, message = FALSE, warning = FALSE}
+# Clean all objects
+rm(annotation, correlation, heatmap_top_hits, legend, pval_counts, qlf, top_hits, 
+   age_group, disease_state_colours, disease_vec, mds_colours, pval_hits,
+   sex_colours, state_colours, top_var_genes, heatmap_col, age_colours, 
+   normalized_counts, fit, aa_data, design, dge, metadata, ht)
+gc()
+```
+
+------------------------------------------------------------------------
+
+# Conclusion {#conclusion}
+
+Differential expression analysis identified eight genes that were significantly differentially expressed after Benjamini–Hochberg correction [@benjamini_1995]. All differentially expressed genes were underexpressed in non-SAA patients relative to healthy controls, suggesting focal hypomethylation associated with the disease state.
+
+Consistent with this, the disease cohort exhibited greater transcriptional heterogeneity than controls, aligning with expectations of biologically heterogeneous disease processes. However, these findings are constrained by the small sample size and should be interpreted cautiously.
+
+------------------------------------------------------------------------
+
+# Question Key {#question-key}
+
+[**Why is the dataset of interest to you?**](#question-key)
+
+I primarily work with cancer datasets in a wide variety of modalities in my research, thus I was interested in choosing a dataset that focused on a different condition. Furthermore, the first research project I undertook focused to acute myeloid leukemia, which sparked my interest in working with hematologic conditions. Additionally, a significant portion of my experience is in DNA methylation data and highly multiplexed biomedical images such as imaging mass cytometry (IMC). Thus, I am less experienced with working with RNA sequencing data and wanted to first start with bulk RNA-seq, rather than scRNA-seq. Furthermore, 
+
+[**What are the control and test conditions of the dataset?**](#data-information)
+
+The test condition is patients with non-severe aplastic anemia (non-SAA) and the control condition is healthy donors.
+
+[**How many samples are in each of the conditions of your dataset?**](#data-information)
+
+The dataset includes three control and six non-SAA samples for a total of nine. However, one control sample was removed as an outlier, thus two controls and six non-SAA samples for a total of eight samples were effectively used in this analysis.
+
+[**Were there expression values that were not unique for specific genes? How did you handle these?**](#identifier-mapping)
+
+No, there were no duplicate expression values that were not unique for specific genes. In other words, no HGNC symbol mapped to more than one Ensembl gene identifier. 
+
+[**Were there expression values that could not be mapped to current HUGO symbols?**](#identifier-mapping)
+
+Yes, 27 Ensembl gene identifiers could not be mapped to HGNC symbols. This is because they were deprecated in the most recent database release. As per the course discussion board, their symbols were left as `NA`. 
+
+[**Were there any outliers in your dataset? How were they handled in the originating paper? How many outliers were removed?**](#outlier-removal)
+
+The originating paper did not mention how outliers were handled. In this analysis, one outlier was identified and removed. Please refer to the corresponding section for the full evidence and validation of this choice. 
+
+[**How did you handle replicates?**](#replicate-analysis)
+
+No replicates were found in the dataset after investigation.
+
+[**What is the final coverage of your dataset?**](#outlier-analysis)
+
+The final coverage of the dataset is `10984` genes across eight samples.
+
+[**Calculate p-values for each of the genes in your expression set. How many genes were significantly differentially expressed? What thresholds did you use and why?**](#differential-analysis)
+
+The dataset has 819 genes that are significantly differentially expressed. A threshold of p-value < 0.05 was used as it is the conventional cutoff for significance in gene expression studies.
+
+[**Multiple hypothesis testing - correct your p-values using a multiple hypothesis correction method. Which method did you use? And Why? How many genes passed correction?**](#multiple-hypothesis-testing)
+
+The dataset has eight significantly differentially expressed genes that passed correction. The Benjamini-Hochberg (BH) method was used to account for multiple testing and control the false discovery rate, maintaining statistical power while still correcting for multiplicity. Furthermore, FDR values are already returned by `edgeR`.
+
+[**Show the amount of differentially expressed genes using an MA Plot or a Volcano plot. Highlight genes of interest.**](#volcano-plot)
+
+Please refer to the linked section for the corresponding figure.
+
+[**Visualize your top hits using a heatmap. Do the conditions cluster together? Explain why or why not.**](#heatmap)
+
+Please refer to the linked section for the corresponding figure.
+
+Yes, the conditions cluster together. Control samples cluster tightly together, indicating high internal consistency and similar expression patterns across the differentially expressed genes. In contrast, disease samples do not form a single compact cluster but instead split into subgroups, reflecting greater heterogeneity. This increased variability is likely biological in origin, though the small sample size limits statistical power and may exaggerate apparent heterogeneity, preventing definitive conclusions.
+
+------------------------------------------------------------------------
+
+# References {#references}
