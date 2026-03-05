@@ -5,7 +5,6 @@ params:
   file_grep: "\\.txt.gz$|\\.tsv.gz$|\\.csv.gz$"
 ---
 
-
 # Worked examples with before/after tables
 
 This chapter shows **what the data look like**, **what the IDs look like**, and **how the table changes once mapped**.
@@ -21,7 +20,6 @@ kable_head <- function(x, n = 5, caption = NULL) {
 
 strip_ensembl_version <- function(x) sub("\\..*$", "", x)
 ```
-
 
 ## `r params$gse`
 
@@ -86,7 +84,6 @@ kable_head(tibble(raw_id = head(ids, 10),
            10, paste(params$gse,": ID preview"))
 ```
 
-
 ### After mapping (Ensembl → HGNC)
 
 ```{r after_map}
@@ -138,7 +135,6 @@ mapping_summary
 
 ```
 
-
 ```{r}
 
 unmapped_ids <- expr_mapped %>%
@@ -150,7 +146,6 @@ unmapped_ids <- expr_mapped %>%
 length(unmapped_ids)
 
 ```
-
 
 ```{r}
 
@@ -232,4 +227,3 @@ ggplot(df_counts, aes(x = biotype, y = n, fill = biotype)) +
 ```
 
 Would the mapping of these identifiers have been different if we used a different version of Ensembl?
-
