@@ -1,18 +1,17 @@
-
 # Differential expression with edgeR (QLF) {#edger}
 
 In this chapter we run **edgeR** using the recommended **quasi-likelihood** pipeline:
 
-1. Start from **raw counts** in a `DGEList`
-2. Estimate dispersions
-3. Fit a QL GLM
-4. Perform QL F-tests for contrasts of interest
+1.  Start from **raw counts** in a `DGEList`
+2.  Estimate dispersions
+3.  Fit a QL GLM
+4.  Perform QL F-tests for contrasts of interest
 
 We use the same additive design:
 
-\[
+$$
 \text{counts} \sim \text{cellline} + \text{treatment}
-\]
+$$
 
 ```{r}
 obj <- readRDS("data/d1_qc_objects.rds")
@@ -87,7 +86,6 @@ ggplot(volcano_df, aes(x = logFC, y = -log10(PValue), color = sig)) +
   )
 ```
 
-
 ```{r}
 
 
@@ -124,7 +122,7 @@ ggplot(tab, aes(x = logFC, y = neglog10P)) +
 
 ## Visualize the top hits as a heatmap
 
- first map the ensembl ids to gene ids
+first map the ensembl ids to gene ids
 
 ```{r}
 
@@ -153,11 +151,9 @@ head(tab_20_vs_nt_annot[, c("ensembl","hgnc_symbol","display_name","logFC","FDR"
 
 ```
 
-
-
 ## Select top hits from `tab_20_vs_nt_annot`
 
-Pick either **top N by FDR** (good default for teaching) or **all genes with FDR < 0.05**.
+Pick either **top N by FDR** (good default for teaching) or **all genes with FDR \< 0.05**.
 
 ### top N genes by FDR
 
@@ -204,7 +200,7 @@ hm_z <- t(scale(t(hm_mat)))
 dim(hm_z)
 ```
 
----
+------------------------------------------------------------------------
 
 ## Sample annotation (treatment + cellline) using Set3
 
@@ -241,7 +237,8 @@ ha <- HeatmapAnnotation(
 )
 
 ```
----
+
+------------------------------------------------------------------------
 
 ## 5) Draw the ComplexHeatmap heatmap
 
@@ -263,7 +260,7 @@ Heatmap(
 )
 ```
 
-Add labels of the gene names - only include 25 of the top hit for easier visibility.  
+Add labels of the gene names - only include 25 of the top hit for easier visibility.
 
 Is this the correct way to add the top 25?
 
@@ -281,7 +278,6 @@ Heatmap(
   column_title = "Samples"
 )
 ```
-
 
 ## Save edgeR results
 

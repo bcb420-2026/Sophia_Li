@@ -85,7 +85,7 @@ file_path = file.path(download_dir, gse, filename)
 if (! file.exists(file_path)) {
   file <- GEOquery::getGEOSuppFiles(
     GEO          = gse, 
-    filter_regex = file_name, 
+    filter_regex = filename, 
     base_dir     = download_dir,
     fetch_files  = TRUE
   )
@@ -1214,7 +1214,7 @@ Consistent with this, the disease cohort exhibited greater transcriptional heter
 
 [**Why is the dataset of interest to you?**](#question-key)
 
-I primarily work with cancer datasets in a wide variety of modalities in my research, thus I was interested in choosing a dataset that focused on a different condition. Furthermore, the first research project I undertook focused to acute myeloid leukemia, which sparked my interest in working with hematologic conditions. Additionally, a significant portion of my experience is in DNA methylation data and highly multiplexed biomedical images such as imaging mass cytometry (IMC). Thus, I am less experienced with working with RNA sequencing data and wanted to first start with bulk RNA-seq, rather than scRNA-seq. Furthermore, 
+I primarily work with cancer datasets in a wide variety of modalities in my research, thus I was interested in choosing a dataset that focused on a different condition. Furthermore, the first research project I undertook focused to acute myeloid leukemia, which sparked my interest in working with hematologic conditions. Additionally, a significant portion of my experience is in DNA methylation data and highly multiplexed biomedical images such as imaging mass cytometry (IMC). Thus, I am less experienced with working with RNA sequencing data and wanted to first start with bulk RNA-seq, rather than scRNA-seq. Furthermore,
 
 [**What are the control and test conditions of the dataset?**](#data-information)
 
@@ -1226,15 +1226,15 @@ The dataset includes three control and six non-SAA samples for a total of nine. 
 
 [**Were there expression values that were not unique for specific genes? How did you handle these?**](#identifier-mapping)
 
-No, there were no duplicate expression values that were not unique for specific genes. In other words, no HGNC symbol mapped to more than one Ensembl gene identifier. 
+No, there were no duplicate expression values that were not unique for specific genes. In other words, no HGNC symbol mapped to more than one Ensembl gene identifier.
 
 [**Were there expression values that could not be mapped to current HUGO symbols?**](#identifier-mapping)
 
-Yes, 27 Ensembl gene identifiers could not be mapped to HGNC symbols. This is because they were deprecated in the most recent database release. As per the course discussion board, their symbols were left as `NA`. 
+Yes, 27 Ensembl gene identifiers could not be mapped to HGNC symbols. This is because they were deprecated in the most recent database release. As per the course discussion board, their symbols were left as `NA`.
 
 [**Were there any outliers in your dataset? How were they handled in the originating paper? How many outliers were removed?**](#outlier-removal)
 
-The originating paper did not mention how outliers were handled. In this analysis, one outlier was identified and removed. Please refer to the corresponding section for the full evidence and validation of this choice. 
+The originating paper did not mention how outliers were handled. In this analysis, one outlier was identified and removed. Please refer to the corresponding section for the full evidence and validation of this choice.
 
 [**How did you handle replicates?**](#replicate-analysis)
 
@@ -1246,7 +1246,7 @@ The final coverage of the dataset is `10984` genes across eight samples.
 
 [**Calculate p-values for each of the genes in your expression set. How many genes were significantly differentially expressed? What thresholds did you use and why?**](#differential-analysis)
 
-The dataset has 819 genes that are significantly differentially expressed. A threshold of p-value < 0.05 was used as it is the conventional cutoff for significance in gene expression studies.
+The dataset has 819 genes that are significantly differentially expressed. A threshold of p-value \< 0.05 was used as it is the conventional cutoff for significance in gene expression studies.
 
 [**Multiple hypothesis testing - correct your p-values using a multiple hypothesis correction method. Which method did you use? And Why? How many genes passed correction?**](#multiple-hypothesis-testing)
 

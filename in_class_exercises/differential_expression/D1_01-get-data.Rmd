@@ -1,4 +1,3 @@
-
 # Get the data {#get-data}
 
 ## Download the GEO supplementary file(s)
@@ -55,14 +54,14 @@ counts[1:3, 1:3]
 
 Sample names in this series follow patterns like:
 
-- `900CTG_NT`
-- `900CTG_3'CTG`
-- `900CTG_20CTG`
+-   `900CTG_NT`
+-   `900CTG_3'CTG`
+-   `900CTG_20CTG`
 
 We will parse:
 
-- `cellline`: `900CTG`, `1150CTG`, `1450CTG`
-- `treatment`: `NT`, `3CTG`, `20CTG`
+-   `cellline`: `900CTG`, `1150CTG`, `1450CTG`
+-   `treatment`: `NT`, `3CTG`, `20CTG`
 
 ```{r}
 
@@ -111,7 +110,6 @@ counts_mapped <- mapped_counts %>%
   kable_head(counts_mapped[, 1:min(8, ncol(counts_mapped))], 5, paste(": mapped table preview"))
 }
 ```
-
 
 ## Save intermediate objects
 

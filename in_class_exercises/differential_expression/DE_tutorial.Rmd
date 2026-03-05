@@ -1,0 +1,1466 @@
+
+---
+title: "Differential Expression Tutorial"
+author: "BCB420 / Ruth Isserlin"
+site: bookdown::bookdown_site
+output:
+  bookdown::html_book:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    df_print: paged
+  bookdown::pdf_book:
+    toc: true
+    number_sections: true
+documentclass: book
+bibliography: [references.bib]
+link-citations: true
+---
+
+# Overview
+
+This bookdown tutorial demonstrates differential expression analysis on **GSE233947**, which provides a **FeatureCounts raw-count matrix** as a GEO supplementary file (`GSE233947_FeatureCounts_V31genes_RawCounts_ENSG.tsv.gz`).
+
+We implement three DE workflows in clearly separated chapters:
+
+- **limma-voom** (Chapter \@ref(limma-voom))
+- **edgeR (quasi-likelihood)** (Chapter \@ref(edger))
+- **DESeq2 ** (Chapter \@ref(deseq2))
+
+In addition, it also demonstrates the analysis of differential expression analysis on a  messy dataset  **GSE240829**, which provides multiple files on GEO, two are TPM and one is labelled as salmon feature counts so for argument's sake I am going to assume that it is salmon estimated counts (as opposed to TPM, like the other files.).
+
+- **limma-voom** (Chapter \@ref(limma-voom_dataset2))
+- **edgeR (quasi-likelihood)** --> well we try quasi-likelihood (Chapter \@ref(edger_dataset2))
+- **DESeq2 ** (Chapter \@ref(deseq2_dataset2))
+
+
+```{r setup, include=FALSE}
+# Global chunk defaults
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+
+set.seed(1)
+```
+
+## Packages
+
+```{r}
+# Install once if needed:
+if(!require(tidyverse)){
+  install.packages(c("tidyverse"))
+}
+library(GEOquery)
+library(edgeR)
+library(limma)
+library(tidyverse)
+library(ComplexHeatmap)
+library(RColorBrewer)
+library(circlize)
+```
+
+## Reproducibility
+
+- Run this project in RStudio.
+- Click **Build** → **Build Book** (or run `bookdown::render_book("index.Rmd")`).
+
+
+<!--chapter:end:index.Rmd-->
+
+
+# Get the data {#get-data}
+
+## Download the GEO supplementary file(s)
+
+This chapter downloads it automatically using **GEOquery**.
+
+```{r}
+GSE_ID <- "GSE233947"
+
+# Download supplementary files into ./data/GSE233947/
+# (If already downloaded, GEOquery will reuse existing files.)
+
+dir.create("data", showWarnings = FALSE)
+
+supp <- GEOquery::getGEOSuppFiles(
+  GSE_ID,
+  makeDirectory = TRUE,
+  baseDir = "data"
+)
+```
+
+## Read the FeatureCounts matrix
+
+```{r}
+counts_file <- file.path("data", GSE_ID, "GSE233947_FeatureCounts_V31genes_RawCounts_ENSG.tsv.gz")
+stopifnot(file.exists(counts_file))
+
+fc <- readr::read_tsv(counts_file, show_col_types = FALSE)
+
+# Peek at the columns
+names(fc)[1:min(12, ncol(fc))]
+```
+
+### Build a counts matrix (genes × samples)
+
+```{r}
+sample_cols <- colnames(fc)
+
+counts <- fc %>%
+  dplyr::select( all_of(sample_cols)) %>%
+  as.data.frame()
+
+rownames(counts) <- counts$Gene
+counts$Gene <- NULL
+
+counts <- as.matrix(counts)
+storage.mode(counts) <- "integer"
+
+dim(counts)
+counts[1:3, 1:3]
+```
+
+## Create metadata from sample names
+
+Sample names in this series follow patterns like:
+
+- `900CTG_NT`
+- `900CTG_3'CTG`
+- `900CTG_20CTG`
+
+We will parse:
+
+- `cellline`: `900CTG`, `1150CTG`, `1450CTG`
+- `treatment`: `NT`, `3CTG`, `20CTG`
+
+```{r}
+
+#design matrix - 
+samples <- colnames(counts)[1:ncol(counts)]
+cellline  <- unlist(lapply(samples,FUN =
+                             function(x){unlist(strsplit(x,split = "_"))[2]}))       
+treatment <- unlist(lapply(samples,FUN = 
+                             function(x){unlist(strsplit(x,split = "_"))[3]}))     
+meta <- data.frame(samples, cellline, treatment)
+
+
+```
+
+## Identifier mapping
+
+```{r}
+strip_ensembl_version <- function(x) sub("\\..*$", "", x)
+
+kable_head <- function(x, n = 5, caption = NULL) {
+  knitr::kable(utils::head(x, n), caption = caption)
+}
+
+mapped_counts <- data.frame(ensembl_gene_id = rownames(counts),counts)
+ids<- mapped_counts$ensembl_gene_id
+
+if (any(grepl("^ENSG", strip_ensembl_version(ids)))) {
+  library(biomaRt)
+  ensembl_ids <- unique(strip_ensembl_version(ids))
+  ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+
+  map <- getBM(
+    attributes = c("ensembl_gene_id", "hgnc_symbol"),
+    filters = "ensembl_gene_id",
+    values = ensembl_ids,
+    mart = ensembl
+  )
+
+  kable_head(map, 10, paste(": mapping preview"))
+
+counts_mapped <- mapped_counts %>%
+    left_join(map, by = "ensembl_gene_id") %>%
+  dplyr::select( ensembl_gene_id,hgnc_symbol, everything())
+
+
+  kable_head(counts_mapped[, 1:min(8, ncol(counts_mapped))], 5, paste(": mapped table preview"))
+}
+```
+
+
+## Save intermediate objects
+
+```{r}
+saveRDS(list(counts = counts, 
+             meta = meta, 
+             mappings = counts_mapped[,1:2]), 
+        file = "data/d1_counts_and_meta.rds")
+```
+
+<!--chapter:end:D1_01-get-data.Rmd-->
+
+
+# QC, filtering and identifier mapping {#qc}
+
+This chapter performs shared QC steps used by both **limma-voom** and **edgeR** and **DEseq2**.
+
+```{r}
+obj <- readRDS("data/d1_counts_and_meta.rds")
+counts <- obj$counts
+meta <- obj$meta
+mappings <- obj$mappings
+
+# Create a DGEList (edgeR data container)
+dge <- edgeR::DGEList(counts = counts)
+
+# Attach metadata
+# (not required, but helpful)
+dge$samples <- cbind(dge$samples, meta)
+
+dge$samples
+```
+
+## Filter lowly expressed genes
+
+We use `filterByExpr` with the intended design to remove genes with insufficient counts.
+
+```{r}
+design <- model.matrix(~ 0 +  treatment+ cellline, data = meta)
+
+keep <- edgeR::filterByExpr(dge, design)
+dge_f <- dge[keep, , keep.lib.sizes = FALSE]
+
+dim(dge)
+dim(dge_f)
+
+#create a subset of the gene mappings
+counts_mapped_filtered <- counts_mapped[counts_mapped$ensembl_gene_id %in% rownames(dge_f$counts),] 
+```
+
+## TMM normalization
+
+```{r}
+dge_f <- edgeR::calcNormFactors(dge_f, method = "TMM")
+dge_f$samples
+```
+
+## Exploratory MDS plot
+
+```{r}
+current_colors <- RColorBrewer::brewer.pal(n = length(unique(meta$treatment)), "Set2")
+names(current_colors) <- levels(factor(meta$treatment))
+
+plotMDS(dge_f,
+  labels = meta$treatment,
+  col = current_colors[meta$treatment],
+  main = "MDS plot (colored by treatment)"
+)
+legend("topright",
+  legend = names(current_colors),
+  col = current_colors,
+  pch = 16,
+  bty = "n"
+)
+```
+
+
+## Exploratory MDS plot - coloured by cellline
+
+```{r}
+current_colors_cellline <- RColorBrewer::brewer.pal(n = length(unique(meta$cellline)), "Set1")
+names(current_colors_cellline) <- levels(factor(meta$cellline))
+
+plotMDS(dge_f,
+  labels = meta$cellline,
+  col = current_colors_cellline[meta$cellline],
+  main = "MDS plot (colored by cellline)"
+)
+legend("topright",
+  legend = names(current_colors_cellline),
+  col = current_colors_cellline,
+  pch = 16,
+  bty = "n"
+)
+```
+
+## log-CPM for visualization
+
+```{r}
+lcpm <- edgeR::cpm(dge_f, log = TRUE, prior.count = 1)
+summary(as.vector(lcpm))
+```
+
+## Save for downstream chapters
+
+```{r}
+saveRDS(list(dge_f = dge_f, 
+             meta = meta, 
+             design = design, 
+             lcpm = lcpm, 
+             mappings = mappings),
+        file = "data/d1_qc_objects.rds")
+```
+
+
+
+
+<!--chapter:end:D1_02-qc-filtering.Rmd-->
+
+
+# Differential expression with limma-voom {#limma-voom}
+
+In this chapter we run **limma-voom**, which:
+
+1. Starts from **raw counts**
+2. Transforms to **log2-CPM** with precision weights (`voom()`)
+3. Fits a linear model + empirical Bayes moderation
+
+We use an additive model:
+
+\[
+\text{expression} \sim \text{cellline} + \text{treatment}
+\]
+
+This estimates treatment effects while controlling for baseline differences between cell lines.
+
+```{r}
+obj <- readRDS("data/d1_qc_objects.rds")
+dge_f <- obj$dge_f
+meta <- obj$meta
+mappings <- obj$mappings
+
+design <- obj$design
+
+v <- limma::voom(dge_f, design, plot = TRUE)
+fit <- limma::lmFit(v, design)
+fit <- limma::eBayes(fit, trend = TRUE)
+
+# Contrasts
+contr <- limma::makeContrasts(
+  `3CTG_vs_NT` = treatment3CTG - treatmentNT,
+  `20CTG_vs_NT` = treatment20CTG - treatmentNT,
+  `20CTG_vs_3CTG` = treatment20CTG - treatment3CTG,
+  levels = design
+)
+
+fit2 <- limma::contrasts.fit(fit, contr)
+fit2 <- limma::eBayes(fit2, trend = TRUE)
+```
+
+## Results tables
+
+```{r}
+res_3_vs_nt <- limma::topTable(fit2, coef = "3CTG_vs_NT", number = Inf, sort.by = "P")
+res_20_vs_nt <- limma::topTable(fit2, coef = "20CTG_vs_NT", number = Inf, sort.by = "P")
+res_20_vs_3 <- limma::topTable(fit2, coef = "20CTG_vs_3CTG", number = Inf, sort.by = "P")
+
+head(res_20_vs_nt)
+```
+
+## Volcano plot (20CTG vs NT)
+
+```{r}
+volcano_df <- res_20_vs_nt %>%
+  rownames_to_column("ensembl") %>%
+  mutate(sig = adj.P.Val < 0.05)
+
+ggplot(volcano_df, aes(x = logFC, y = -log10(P.Value), color = sig)) +
+  geom_point(alpha = 0.6) +
+  theme_minimal() +
+  labs(
+    title = "limma-voom: 20CTG vs NT",
+    x = "log2 fold-change",
+    y = "-log10(p-value)"
+  )
+```
+
+## Save limma results
+
+```{r}
+saveRDS(
+  list(
+    meta = meta,
+    counts_mapped_filtered = counts_mapped_filtered,
+    fit2 = fit2,
+    res_3_vs_nt = res_3_vs_nt,
+    res_20_vs_nt = res_20_vs_nt,
+    res_20_vs_3 = res_20_vs_3
+  ),
+  file = "data/d1_limma_results.rds"
+)
+```
+
+<!--chapter:end:D1_03-limma-voom.Rmd-->
+
+
+# Differential expression with edgeR (QLF) {#edger}
+
+In this chapter we run **edgeR** using the recommended **quasi-likelihood** pipeline:
+
+1. Start from **raw counts** in a `DGEList`
+2. Estimate dispersions
+3. Fit a QL GLM
+4. Perform QL F-tests for contrasts of interest
+
+We use the same additive design:
+
+\[
+\text{counts} \sim \text{cellline} + \text{treatment}
+\]
+
+```{r}
+obj <- readRDS("data/d1_qc_objects.rds")
+dge_f <- obj$dge_f
+meta <- obj$meta
+mappings <- obj$mappings
+
+design <- obj$design
+
+# Contrasts
+contr <- makeContrasts(
+  `3CTG_vs_NT` = treatment3CTG - treatmentNT,
+  `20CTG_vs_NT` = treatment20CTG - treatmentNT,
+  `20CTG_vs_3CTG` = treatment20CTG - treatment3CTG,
+  levels = design
+)
+
+# Estimate dispersion and fit QL model
+edge <- edgeR::estimateDisp(dge_f, design)
+fit <- edgeR::glmQLFit(edge, design)
+```
+
+## Plot Biological coefficient of variance plot
+
+```{r}
+plotBCV(edge)
+```
+
+## Test: 3CTG vs NT and 20CTG vs NT
+
+With this design, the coefficients `treatment3CTG` and `treatment20CTG` correspond to contrasts vs NT.
+
+```{r}
+qlf_3_vs_nt <- edgeR::glmQLFTest(fit, contrast = contr[, "3CTG_vs_NT"])
+qlf_20_vs_nt <- edgeR::glmQLFTest(fit, contrast = contr[, "20CTG_vs_NT"])
+
+edgeR::topTags(qlf_20_vs_nt)
+```
+
+## Test: 20CTG vs 3CTG
+
+```{r}
+
+qlf_20_vs_3 <- edgeR::glmQLFTest(fit, contrast = contr[, "20CTG_vs_3CTG"])
+
+edgeR::topTags(qlf_20_vs_3)
+```
+
+## Extract full results
+
+```{r}
+tab_3_vs_nt <- edgeR::topTags(qlf_3_vs_nt, n = Inf)$table %>% rownames_to_column("ensembl")
+tab_20_vs_nt <- edgeR::topTags(qlf_20_vs_nt, n = Inf)$table %>% rownames_to_column("ensembl")
+tab_20_vs_3 <- edgeR::topTags(qlf_20_vs_3, n = Inf)$table %>% rownames_to_column("ensembl")
+
+head(tab_20_vs_nt)
+```
+
+## Volcano plot of EdgeR results
+
+```{r}
+volcano_df <- tab_20_vs_nt %>%
+  mutate(sig = FDR < 0.05)
+
+ggplot(volcano_df, aes(x = logFC, y = -log10(PValue), color = sig)) +
+  geom_point(alpha = 0.6) +
+  theme_minimal() +
+  labs(
+    title = "EdgeR: 20CTG vs NT",
+    x = "log2 fold-change",
+    y = "-log10(p-value)"
+  )
+```
+
+
+```{r}
+
+
+tab <- topTags(qlf_20_vs_nt, n = Inf)$table %>%
+  rownames_to_column("gene") %>%
+  mutate(
+    neglog10P = -log10(PValue),
+    direction = case_when(
+      FDR < 0.05 & logFC > 0 ~ "Up",
+      FDR < 0.05 & logFC < 0 ~ "Down",
+      TRUE ~ "Not sig"
+    )
+  )
+
+ggplot(tab, aes(x = logFC, y = neglog10P)) +
+  geom_point(aes(color = direction), alpha = 0.7, size = 1.2) +
+  scale_color_manual(values = c(
+    "Up" = "red",
+    "Down" = "blue",
+    "Not sig" = "grey70"
+  )) +
+  geom_vline(xintercept = c(-1, 1), linetype = "dashed", color = "steelblue") +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "steelblue") +
+  theme_minimal() +
+  labs(
+    title = "edgeR volcano: 20CTG vs NT",
+    x = "log2 fold change (logFC)",
+    y = "-log10(p-value)",
+    color = NULL
+  )
+
+
+```
+
+## Visualize the top hits as a heatmap
+
+ first map the ensembl ids to gene ids
+
+```{r}
+
+# Keep only the columns we need and ensure they are character
+map_df <- mappings %>%
+  transmute(
+    ensembl = as.character(ensembl_gene_id),
+    hgnc_symbol = as.character(hgnc_symbol)
+  ) %>%
+  distinct(ensembl, .keep_all = TRUE)
+
+# Join mapping onto the edgeR results table (tab_20_vs_nt)
+tab_20_vs_nt_annot <- tab_20_vs_nt %>%
+  mutate(ensembl = as.character(ensembl)) %>%
+  left_join(map_df, by = "ensembl") %>%
+  mutate(
+    # Use HGNC when available, otherwise fall back to Ensembl
+    display_name = ifelse(!is.na(hgnc_symbol) & hgnc_symbol != "",
+                          hgnc_symbol,
+                          ensembl)
+  )
+
+# Quick check: how many mapped?
+mean(!is.na(tab_20_vs_nt_annot$hgnc_symbol))
+head(tab_20_vs_nt_annot[, c("ensembl","hgnc_symbol","display_name","logFC","FDR")])
+
+```
+
+
+
+## Select top hits from `tab_20_vs_nt_annot`
+
+Pick either **top N by FDR** (good default for teaching) or **all genes with FDR < 0.05**.
+
+### top N genes by FDR
+
+```{r edger-heatmap-top-hits}
+top_n <- 50  # change to 25/100 as desired
+
+top_hits_tbl <- tab_20_vs_nt_annot %>%
+  arrange(FDR, PValue) %>%
+  slice_head(n = top_n)
+
+# Ensembl IDs for subsetting the matrix
+top_hits_ensembl <- top_hits_tbl$ensembl
+
+# Row labels we want to show on the heatmap
+top_hits_labels <- top_hits_tbl$display_name
+
+head(top_hits_tbl[, c("ensembl","display_name","logFC","FDR")])
+```
+
+## Make the expression matrix for the heatmap (logCPM + row z-score)
+
+We’ll compute **logCPM** from counts (recommended for visualization), then **z-score per gene**.
+
+```{r edger-heatmap-matrix}
+# logCPM from counts for visualization
+# logCPM for visualization
+logcpm <- edgeR::cpm(counts, log = TRUE, prior.count = 1)
+
+# Keep only genes present in the expression matrix
+keep <- top_hits_ensembl %in% rownames(logcpm)
+
+hm_mat <- logcpm[top_hits_ensembl[keep], , drop = FALSE]
+
+# Create labels aligned to hm_mat rows
+hm_labels <- top_hits_labels[keep]
+
+# IMPORTANT: avoid duplicate rownames (HGNC symbols can repeat)
+# Make labels unique while preserving readability
+rownames(hm_mat) <- make.unique(hm_labels)
+
+# Z-score per gene across samples for pattern visibility
+hm_z <- t(scale(t(hm_mat)))
+
+dim(hm_z)
+```
+
+---
+
+## Sample annotation (treatment + cellline) using Set3
+
+```{r edger-heatmap-annotation}
+
+meta$cellline <- as.factor(meta$cellline)
+meta$treatment <- as.factor(meta$treatment)
+
+# Set3 palettes (qualitative)
+treat_levels <- levels(meta$treatment)
+cell_levels  <- levels(meta$cellline)
+
+treat_cols <- setNames(
+  brewer.pal(max(3, length(treat_levels)), "Set3")[seq_along(treat_levels)],
+  treat_levels
+)
+
+cell_cols <- setNames(
+  brewer.pal(max(3, length(cell_levels)), "Set2")[seq_along(cell_levels)],
+  cell_levels
+)
+
+ha <- HeatmapAnnotation(
+  treatment = meta$treatment,
+  cellline  = meta$cellline,
+  col = list(
+    treatment = treat_cols,
+    cellline  = cell_cols
+  ),
+  annotation_legend_param = list(
+    treatment = list(title = "Treatment"),
+    cellline  = list(title = "Cell line")
+  )
+)
+
+```
+---
+
+## 5) Draw the ComplexHeatmap heatmap
+
+This produces the actual figure. Since we z-scored the rows, use a diverging palette centered at 0.
+
+```{r edger-heatmap-plot, fig.width=8, fig.height=8}
+col_fun <- circlize::colorRamp2(c(-2, 0, 2), c("blue", "white", "red"))
+
+Heatmap(
+  hm_z,
+  col = col_fun,
+  top_annotation = ha,
+  show_row_names = FALSE,
+  show_column_names = FALSE,
+  cluster_rows = TRUE,
+  cluster_columns = TRUE,
+  row_title = paste0("Top ", nrow(hm_z), " genes (edgeR: 20CTG vs NT)"),
+  column_title = "Samples"
+)
+```
+
+Add labels of the gene names - only include 25 of the top hit for easier visibility.  
+
+Is this the correct way to add the top 25?
+
+```{r}
+Heatmap(
+  hm_z[1:25,],
+  col = col_fun,
+  top_annotation = ha,
+  show_row_names = TRUE,         # <-- now shows HGNC symbols
+  row_names_gp = grid::gpar(fontsize = 8),
+  show_column_names = FALSE,
+  cluster_rows = TRUE,
+  cluster_columns = TRUE,
+  row_title = paste0("Top ", nrow(hm_z), " genes (edgeR: 20CTG vs NT)"),
+  column_title = "Samples"
+)
+```
+
+
+## Save edgeR results
+
+```{r}
+saveRDS(
+  list(
+    meta = meta,
+    counts_mapped_filtered = counts_mapped_filtered,
+    fit = fit,
+    qlf_3_vs_nt = qlf_3_vs_nt,
+    qlf_20_vs_nt = qlf_20_vs_nt,
+    qlf_20_vs_3 = qlf_20_vs_3,
+    tab_3_vs_nt = tab_3_vs_nt,
+    tab_20_vs_nt = tab_20_vs_nt,
+    tab_20_vs_3 = tab_20_vs_3
+  ),
+  file = "data/d1_edger_results.rds"
+)
+```
+
+<!--chapter:end:D1_04-edgeR.Rmd-->
+
+
+# Differential expression with DESeq2 {#deseq2}
+
+DESeq2 performs differential expression analysis for RNA-seq **count** data.
+
+```{r}
+obj <- readRDS("data/d1_qc_objects.rds")
+dge_f <- obj$dge_f
+meta <- obj$meta
+
+library(DESeq2)
+
+count_mat <- dge_f$counts
+storage.mode(count_mat) <- "integer"
+stopifnot(all(colnames(count_mat) == meta$sample))
+
+dds <- DESeqDataSetFromMatrix(
+  countData = count_mat,
+  colData = as.data.frame(meta),
+  design = ~ cellline + treatment
+)
+
+dds <- DESeq(dds)
+```
+
+## Results
+
+```{r}
+res_20_vs_nt <- results(dds, contrast = c("treatment", "20CTG", "NT"))
+res_3_vs_nt <- results(dds, contrast = c("treatment", "3CTG", "NT"))
+res_20_vs_3 <- results(dds, contrast = c("treatment", "20CTG", "3CTG"))
+
+summary(res_20_vs_nt)
+```
+
+## Volcano (red=up, blue=down)
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tibble)
+
+vol <- as.data.frame(res_20_vs_nt) %>%
+  rownames_to_column("gene") %>%
+  mutate(
+    neglog10p = -log10(pvalue),
+    direction = case_when(
+      !is.na(padj) & padj < 0.05 & log2FoldChange > 0 ~ "Up",
+      !is.na(padj) & padj < 0.05 & log2FoldChange < 0 ~ "Down",
+      TRUE ~ "Not sig"
+    )
+  )
+
+ggplot(vol, aes(log2FoldChange, neglog10p)) +
+  geom_point(aes(color = direction), alpha = 0.7, size = 1.2) +
+  scale_color_manual(values = c(Up = "red", Down = "blue", `Not sig` = "grey70")) +
+  theme_minimal() +
+  labs(title = "DESeq2: 20CTG vs NT", x = "log2 FC", y = "-log10(p)", color = NULL)
+```
+
+```{r}
+saveRDS(list(meta = meta, dds = dds, res_20_vs_nt = res_20_vs_nt,
+             res_3_vs_nt = res_3_vs_nt, res_20_vs_3 = res_20_vs_3),
+        file = "data/d1_deseq2_results.rds")
+```
+
+<!--chapter:end:D1_05-deseq2.Rmd-->
+
+# Get the data - Dataset 2 {#get-data_dataset2}
+
+## Download the GEO supplementary file(s)
+
+This chapter downloads it automatically using **GEOquery**.
+
+```{r}
+GSE_ID <- "GSE240829"
+
+# Download supplementary files into ./data/GSE240829/
+# (If already downloaded, GEOquery will reuse existing files.)
+
+dir.create("data", showWarnings = FALSE)
+
+supp <- GEOquery::getGEOSuppFiles(
+  GSE_ID,
+  makeDirectory = TRUE,
+  baseDir = "data"
+)
+```
+
+## Read the FeatureCounts matrix
+
+```{r}
+counts_file <- file.path("data", GSE_ID, "GSE240829_POCROC_good.abundance.salmon.genes_8.14.23.txt.gz")
+stopifnot(file.exists(counts_file))
+
+fc <- readr::read_tsv(counts_file, show_col_types = FALSE)
+
+# Peek at the columns
+names(fc)[1:min(12, ncol(fc))]
+```
+
+### Build a counts matrix (genes × samples)
+
+```{r}
+sample_cols <- colnames(fc)
+
+counts <- fc %>%
+  dplyr::select( all_of(sample_cols)) %>%
+  as.data.frame()
+
+rownames(counts) <- counts[,1]
+counts[,1] <- NULL
+
+counts <- as.matrix(counts)
+#storage.mode(counts) <- "integer"
+
+dim(counts)
+counts[1:3, 1:3]
+```
+
+## Create metadata from sample names
+
+Sample names in this series follow patterns like:
+
+21020_0_ovary 
+21020_2_lymph_node 
+24487_0_l_ovary
+...
+Where the first number is the patient id, second number is whether it is primary or recurrent and the third is location.  It was separated really badly because there are underscores in the location name as well.  (l_ovary = left ovary). --> just grab the last token for the location
+
+We will parse:
+
+- 'patient' - patient id
+- 'status' - primary, recurrent1, recurrent2, recurrent3
+- 'location' - ovary, 
+
+```{r}
+
+#design matrix - 
+samples <- colnames(counts)[1:ncol(counts)]
+patient  <- unlist(lapply(samples,FUN =
+                             function(x){unlist(strsplit(x,split = "_"))[1]}))       
+status <- unlist(lapply(samples,FUN = 
+                             function(x){unlist(strsplit(x,split = "_"))[2]}))     
+location <- unlist(lapply(samples,FUN = 
+                             function(x){
+                               if(length(unlist(strsplit(x, "_"))) > 3){
+                                 y <- paste(unlist(strsplit(x, "_"))[3:length(unlist(strsplit(x, "_")))],collapse ="_")
+                               } else{
+                                 y <- unlist(strsplit(x, "_"))[3]
+                               }
+                               return(y)
+                               }))  
+meta <- data.frame(samples, patient,status, location)
+
+
+```
+
+## Identifier mapping
+
+```{r}
+strip_ensembl_version <- function(x) sub("\\..*$", "", x)
+
+kable_head <- function(x, n = 5, caption = NULL) {
+  knitr::kable(utils::head(x, n), caption = caption)
+}
+
+mapped_counts <- data.frame(ensembl_gene_id = strip_ensembl_version(rownames(counts)),counts)
+ids<- mapped_counts$ensembl_gene_id
+
+if (any(grepl("^ENSG", strip_ensembl_version(ids)))) {
+  library(biomaRt)
+  ensembl_ids <- unique(strip_ensembl_version(ids))
+  ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+
+  map <- getBM(
+    attributes = c("ensembl_gene_id", "hgnc_symbol"),
+    filters = "ensembl_gene_id",
+    values = ensembl_ids,
+    mart = ensembl
+  )
+
+  kable_head(map, 10, paste(": mapping preview"))
+
+counts_mapped <- mapped_counts %>%
+    left_join(map, by = "ensembl_gene_id") %>%
+  dplyr::select( ensembl_gene_id,hgnc_symbol, everything())
+
+
+  kable_head(counts_mapped[, 1:min(8, ncol(counts_mapped))], 5, paste(": mapped table preview"))
+}
+```
+
+
+## Save intermediate objects
+
+```{r}
+saveRDS(list(counts = counts, 
+             meta = meta, 
+             mappings = counts_mapped[,1:2]), file = "data/d2_counts_and_meta.rds")
+```
+
+<!--chapter:end:D2_01-get-data.Rmd-->
+
+# QC, filtering and identifier mapping - Dataset 2{#qc_dataset2}
+
+This chapter performs shared QC steps used by both **limma-voom** and **edgeR** and **DEseq2**.
+
+## Load in the data
+
+```{r}
+obj <- readRDS("data/d2_counts_and_meta.rds")
+counts <- obj$counts
+meta <- obj$meta
+mappings <- obj$mappings
+```
+
+
+
+## Simplify this model
+
+Too many variables in this dataset - reduce the data to just two statuses - 0 or 1
+
+```{r}
+meta <- meta[(meta$status == 0 | meta$status == 1),]
+counts <- counts[,meta$samples]
+```
+
+
+```{r}
+
+
+# Create a DGEList (edgeR data container)
+dge <- edgeR::DGEList(counts = counts)
+
+# Attach metadata
+# (not required, but helpful)
+dge$samples <- cbind(dge$samples, meta)
+
+dge$samples
+```
+
+
+
+## Filter lowly expressed genes
+
+We use `filterByExpr` with the intended design to remove genes with insufficient counts.
+
+```{r}
+design <- model.matrix(~ 0 + status +patient , 
+                       data = meta)
+
+keep <- edgeR::filterByExpr(dge,design,min.count = 3)
+dge_f <- dge[keep, , keep.lib.sizes = FALSE]
+
+#if the above is too stringent because of a complicated model desitn
+# you can do it manually - 
+
+#examples - 
+#cpm_mat <- edgeR::cpm(dge)
+#keep <- rowSums(cpm_mat > 1) >= 2
+#dge2 <- dge[keep, , keep.lib.sizes = FALSE]
+
+
+dim(dge)
+dim(dge_f)
+
+#create a subset of the gene mappings
+counts_mapped_filtered <- counts_mapped[counts_mapped$ensembl_gene_id %in% rownames(dge_f$counts),] 
+```
+
+## TMM normalization
+
+```{r}
+dge_f <- edgeR::calcNormFactors(dge_f, method = "TMM")
+dge_f$samples
+```
+
+## Exploratory MDS plot
+
+```{r}
+current_colors <- RColorBrewer::brewer.pal(n = length(unique(meta$status)), "Set2")
+names(current_colors) <- levels(factor(meta$status))
+
+plotMDS(dge_f,
+  labels = meta$status,
+  col = current_colors[meta$status],
+  main = "MDS plot (colored by status)"
+)
+legend("topright",
+  legend = names(current_colors),
+  col = current_colors,
+  pch = 16,
+  bty = "n"
+)
+```
+
+
+## Exploratory MDS plot - coloured by patient
+
+```{r}
+current_colors_location <-  colorRampPalette(RColorBrewer::brewer.pal(9, "Set1"))(length(unique(meta$location)))
+names(current_colors_location) <- levels(factor(meta$location))
+
+
+
+op <- par(no.readonly = TRUE)     # save graphics settings
+par(mar = c(5, 4, 4, 10) + 0.1)   # increase right margin (last number)
+par(xpd = NA)                    # allow drawing outside plot region
+
+plotMDS(dge_f,
+  labels = meta$location,
+  col = current_colors_location[meta$location],
+  main = "MDS plot (colored by location)"
+)
+# legend("topright",
+#   legend = names(current_colors_location),
+#   col = current_colors_location,
+#   pch = 16,
+#   bty = "n"
+# )
+
+
+legend("topright",
+  inset = c(-0.35, 0),           # push legend into the right margin
+  legend = names(current_colors_location),
+  col = current_colors_location,
+  pch = 16,
+  bty = "n",
+  cex = 0.8
+)
+
+
+```
+
+Number of samples by region - 
+
+```{r}
+
+# Count samples per location
+meta$location <- as.character(meta$location)
+loc_counts <- meta %>%
+  dplyr::count(location, name = "n") 
+  
+
+# Plot
+ggplot(loc_counts, aes(x = location, y = n)) +
+  geom_col(fill = "#2C7FB8", width = 0.75) +
+  geom_text(aes(label = n), hjust = -0.15, size = 3.8) +
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.12))
+                     ) +
+  labs(
+    title = "Number of samples by location",
+    x = NULL,
+    y = "Number of samples"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    plot.title = element_text(face = "bold")
+  )
+
+```
+
+look at the different make ups of the data - What are the different locations divided by statuses?
+
+```{r}
+
+
+meta2 <- meta %>%
+  mutate(
+    status = factor(status, levels = 0:3),
+    location = factor(location)
+  )
+
+
+
+# totals per status for labeling
+tot_status <- meta2 %>% dplyr::count(status, name = "total")
+
+status_broken_into_locations <- ggplot(meta2, aes(x = status, fill = location)) +
+  geom_bar(color = "white", linewidth = 0.2) +   # stacked counts
+  geom_text(
+    data = tot_status,
+    aes(x = status, y = total, label = total),
+    inherit.aes = FALSE,
+    vjust = -0.4,
+    size = 4
+  ) +
+  labs(
+    title = "Number of samples by Status (stacked by Location)",
+    x = "Status",
+    y = "Number of samples",
+    fill = "Location"
+  ) +   coord_flip() +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    plot.title = element_text(face = "bold")
+  ) +
+  expand_limits(y = max(tot_status$total) * 1.08)
+
+status_broken_into_locations
+
+
+
+```
+
+What are the different status divided by locations?
+
+```{r}
+
+meta2$location <- factor(meta$location,
+                         levels = names(sort(table(meta$location), 
+                                             decreasing = TRUE)))
+
+tot_loc <- meta2 %>% dplyr::count(location, name = "total")
+
+locations_broken_into_statuses <- ggplot(meta2, aes(x = location, fill = status)) +
+  geom_bar(color = "white", linewidth = 0.2) +
+  coord_flip() +
+  geom_text(
+    data = tot_loc %>% mutate(location = location),
+    aes(x = location, y = total, label = total),
+    inherit.aes = FALSE,
+    hjust = -0.15,
+    size = 3.8
+  ) +
+  labs(
+    title = "Number of samples by Location (stacked by Status)",
+    x = "Location",
+    y = "Number of samples",
+    fill = "Status"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    plot.title = element_text(face = "bold")
+  ) +
+  expand_limits(y = max(tot_loc$total) * 1.08)
+
+locations_broken_into_statuses
+
+```
+
+
+
+## log-CPM for visualization
+
+```{r}
+lcpm <- edgeR::cpm(dge_f, log = TRUE, prior.count = 1)
+summary(as.vector(lcpm))
+```
+
+## Save for downstream chapters
+
+```{r}
+saveRDS(list(dge_f = dge_f, 
+             meta = meta, 
+             design = design, 
+             lcpm = lcpm, 
+             mappings = mappings),
+        file = "data/d2_qc_objects.rds")
+```
+
+
+
+
+<!--chapter:end:D2_02-qc-filtering.Rmd-->
+
+# Differential expression with limma-voom - Dataset 2 {#limma-voom_dataset2}
+
+In this chapter we run **limma-voom**, which:
+
+1. Starts from **raw counts**
+2. Transforms to **log2-CPM** with precision weights (`voom()`)
+3. Fits a linear model + empirical Bayes moderation
+
+We use an additive model:
+
+\[
+\text{expression} \sim \text{cellline} + \text{treatment}
+\]
+
+This estimates treatment effects while controlling for baseline differences between cell lines.
+
+```{r}
+obj <- readRDS("data/d2_qc_objects.rds")
+dge_f <- obj$dge_f
+meta <- obj$meta
+mappings <- obj$mappings
+
+design <- obj$design
+
+v <- limma::voom(dge_f, design, plot = TRUE)
+fit <- limma::lmFit(v, design)
+fit <- limma::eBayes(fit, trend = TRUE)
+
+# Contrasts
+contr <- limma::makeContrasts(
+  `status0` = status0 - (status1),
+  levels = design
+)
+
+fit2 <- limma::contrasts.fit(fit, contr)
+fit2 <- limma::eBayes(fit2, trend = TRUE)
+```
+
+## Results tables
+
+```{r}
+res_0_vs_1 <- limma::topTable(fit2, coef = "status0", number = Inf, sort.by = "P")
+
+head(res_0_vs_1 )
+```
+
+## Volcano plot (0 vs rest)
+
+```{r}
+volcano_df <- res_0_vs_1  %>%
+  rownames_to_column("ensembl") %>%
+  mutate(sig = adj.P.Val < 0.05)
+
+ggplot(volcano_df, aes(x = logFC, y = -log10(P.Value), color = sig)) +
+  geom_point(alpha = 0.6) +
+  theme_minimal() +
+  labs(
+    title = "limma-voom: res_0_vs_1 ",
+    x = "log2 fold-change",
+    y = "-log10(p-value)"
+  )
+```
+
+
+## Save limma results
+
+```{r}
+saveRDS(
+  list(
+    meta = meta,
+    mappings = mappings,
+    fit2 = fit2,
+    res_0_vs_1 = res_0_vs_1
+  ),
+  file = "data/d2_limma_results.rds"
+)
+```
+
+<!--chapter:end:D2_03-limma-voom.Rmd-->
+
+# Differential expression with edgeR (QLF) - Dataset 2 {#edger_dataset2}
+
+In this chapter we run **edgeR** using the recommended **quasi-likelihood** pipeline:
+
+1. Start from **raw counts** in a `DGEList`
+2. Estimate dispersions
+3. Fit a QL GLM
+4. Perform QL F-tests for contrasts of interest
+
+We use the same additive design:
+
+\[
+\text{counts} \sim \text{status} + \text{patient}
+\]
+
+```{r}
+obj <- readRDS("data/d2_qc_objects.rds")
+dge_f <- obj$dge_f
+meta <- obj$meta
+mappings <- obj$mappings
+
+design <- obj$design
+
+# Contrasts
+contr <- limma::makeContrasts(
+  `status0vs1` = status0 - (status1),
+  levels = design
+)
+
+# Estimate dispersion and fit QL model
+edge <- edgeR::estimateDisp(dge_f, design)
+fit <- edgeR::glmQLFit(edge, design)
+```
+
+## Plot Biological coefficient of variance plot
+
+```{r}
+plotBCV(edge)
+```
+
+
+## Test: status 0 vs status 1 
+
+```{r}
+qlf_0_vs_1 <- edgeR::glmQLFTest(fit, contrast = contr[, "status0vs1"])
+
+edgeR::topTags(qlf_0_vs_1)
+```
+
+
+## Extract full results
+
+```{r}
+tab_0_vs_1 <- edgeR::topTags(qlf_0_vs_1, n = Inf)$table %>% rownames_to_column("ensembl")
+
+
+head(tab_0_vs_1)
+```
+
+## Volcano plot of EdgeR results
+
+```{r}
+volcano_df <- tab_0_vs_1 %>%
+  mutate(sig = FDR < 0.05)
+
+ggplot(volcano_df, aes(x = logFC, y = -log10(PValue), color = sig)) +
+  geom_point(alpha = 0.6) +
+  theme_minimal() +
+  labs(
+    title = "EdgeR: 0 vs 1",
+    x = "log2 fold-change",
+    y = "-log10(p-value)"
+  )
+```
+
+
+## Try and run glmFit
+
+## Test: status 0 vs status 1 
+
+```{r}
+glmfit_0_vs_1 <- edgeR::glmFit(edge, design)
+glmtest_0_vs_1 <- edgeR::glmLRT(fit, contrast = contr[, "status0vs1"])
+
+edgeR::topTags(glmtest_0_vs_1)
+```
+
+
+
+```{r}
+glm_tab_0_vs_1 <- edgeR::topTags(glmtest_0_vs_1, n = Inf)$table %>% rownames_to_column("ensembl")
+
+tab_glm <- glm_tab_0_vs_1 %>%
+  rownames_to_column("gene") %>%
+  mutate(
+    neglog10P = -log10(PValue),
+    direction = case_when(
+      FDR < 0.05 & logFC > 0 ~ "Up",
+      FDR < 0.05 & logFC < 0 ~ "Down",
+      TRUE ~ "Not sig"
+    )
+  )
+
+ggplot(tab, aes(x = logFC, y = neglog10P)) +
+  geom_point(aes(color = direction), alpha = 0.7, size = 1.2) +
+  scale_color_manual(values = c(
+    "Up" = "red",
+    "Down" = "blue",
+    "Not sig" = "grey70"
+  )) +
+  geom_vline(xintercept = c(-1, 1), linetype = "dashed", color = "steelblue") +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "steelblue") +
+  theme_minimal() +
+  labs(
+    title = "edgeR volcano: 0 vs rest",
+    x = "log2 fold change (logFC)",
+    y = "-log10(p-value)",
+    color = NULL
+  )
+
+
+```
+
+## Save edgeR results
+
+```{r}
+saveRDS(
+  list(
+    meta = meta,
+    mappings = mappings,
+    fit = fit,
+    qlf_0_vs_1  = qlf_0_vs_1 ,
+    glm_tab_0_vs_1  = glm_tab_0_vs_1 
+  ),
+  file = "data/d2_edger_results.rds"
+)
+```
+
+<!--chapter:end:D2_04-edgeR.Rmd-->
+
+
+# Differential expression with DESeq2 - Dataset 2 {#deseq2_dataset2}
+
+DESeq2 performs differential expression analysis for RNA-seq **count** data.
+
+We are assuming here that the counts data are estimated counts exported from salmon - but that is not guarenteed.  
+
+DESeq requires count data - specifically integer count data (not an estimated version).  We will round these numbers but this is not ideal.  You should ideally have count data.  
+
+If you have TPM, (or RPKM, or FPKM) your real only route is to use limma as both edgeR and DESEq2 require raw counts. 
+
+```{r}
+obj <- readRDS("data/d2_qc_objects.rds")
+dge_f <- obj$dge_f
+meta <- obj$meta
+
+design = obj$design
+
+## but DESeq requires the formula and not the model.matrix object
+## below we put the formula in directly 
+
+library(DESeq2)
+
+count_mat <- round(dge_f$counts)
+
+dds <- DESeqDataSetFromMatrix(
+  countData = count_mat,
+  colData = as.data.frame(meta),
+  design = ~ 0 + status 
+)
+
+
+dds <- DESeq(dds)
+```
+
+## Results
+
+```{r}
+res_0_vs_1 <- results(dds,contrast = c("status","0","1"))
+
+summary(res_20_vs_nt)
+```
+
+## Volcano (red=up, blue=down)
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tibble)
+
+vol <- as.data.frame(res_0_vs_1) %>%
+  rownames_to_column("gene") %>%
+  mutate(
+    neglog10p = -log10(pvalue),
+    direction = case_when(
+      !is.na(padj) & padj < 0.05 & log2FoldChange > 0 ~ "Up",
+      !is.na(padj) & padj < 0.05 & log2FoldChange < 0 ~ "Down",
+      TRUE ~ "Not sig"
+    )
+  )
+
+ggplot(vol, aes(log2FoldChange, neglog10p)) +
+  geom_point(aes(color = direction), alpha = 0.7, size = 1.2) +
+  scale_color_manual(values = c(Up = "red", Down = "blue", `Not sig` = "grey70")) +
+  theme_minimal() +
+  labs(title = "DESeq2: 0 vs 1", x = "log2 FC", y = "-log10(p)", color = NULL)
+```
+
+```{r}
+saveRDS(list(meta = meta, 
+             dds = dds, 
+             res_20_vs_nt = res_20_vs_nt,
+             res_3_vs_nt = res_3_vs_nt, 
+             res_20_vs_3 = res_20_vs_3),
+        file = "data/d2_deseq2_results.rds")
+```
+
+<!--chapter:end:D2_05-deseq2.Rmd-->
+
