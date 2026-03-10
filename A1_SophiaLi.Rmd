@@ -86,7 +86,7 @@ if (! file.exists(file_path)) {
   file <- GEOquery::getGEOSuppFiles(
     GEO          = gse, 
     filter_regex = filename, 
-    base_dir     = download_dir,
+    baseDir     = download_dir,
     fetch_files  = TRUE
   )
 }
