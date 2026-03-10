@@ -1,0 +1,2745 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Sophia Li" />
+
+<meta name="date" content="2026-03-05" />
+
+<title>BCB420H1 Winter 2026 - Assignment 2</title>
+
+<script src="A2_SophiaLi_files/header-attrs-2.30/header-attrs.js"></script>
+<script src="A2_SophiaLi_files/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="A2_SophiaLi_files/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="A2_SophiaLi_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="A2_SophiaLi_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="A2_SophiaLi_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="A2_SophiaLi_files/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="A2_SophiaLi_files/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="A2_SophiaLi_files/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="A2_SophiaLi_files/navigation-1.1/tabsets.js"></script>
+<script src="A2_SophiaLi_files/navigation-1.1/codefolding.js"></script>
+<link href="A2_SophiaLi_files/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="A2_SophiaLi_files/pagedtable-1.1/js/pagedtable.js"></script>
+<script src="A2_SophiaLi_files/kePrint-0.0.1/kePrint.js"></script>
+<link href="A2_SophiaLi_files/lightable-0.0.1/lightable.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  background-color: #f8f8f8; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ef2929; } /* Alert */
+code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #204a87; } /* Attribute */
+code span.bn { color: #0000cf; } /* BaseN */
+code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4e9a06; } /* Char */
+code span.cn { color: #8f5902; } /* Constant */
+code span.co { color: #8f5902; font-style: italic; } /* Comment */
+code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+code span.dt { color: #204a87; } /* DataType */
+code span.dv { color: #0000cf; } /* DecVal */
+code span.er { color: #a40000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #0000cf; } /* Float */
+code span.fu { color: #204a87; font-weight: bold; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+code span.ot { color: #8f5902; } /* Other */
+code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+code span.sc { color: #ce5c00; font-weight: bold; } /* SpecialChar */
+code span.ss { color: #4e9a06; } /* SpecialString */
+code span.st { color: #4e9a06; } /* String */
+code span.va { color: #000000; } /* Variable */
+code span.vs { color: #4e9a06; } /* VerbatimString */
+code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+
+.sourceCode .row {
+  width: 100%;
+}
+.sourceCode {
+  overflow-x: auto;
+}
+.code-folding-btn {
+  margin-right: -30px;
+}
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">
+/* for pandoc --citeproc since 2.11 */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">BCB420H1 Winter 2026 - Assignment 2</h1>
+<h3 class="subtitle">Dataset Pathway and Network Analysis of Bulk
+RNA-Seq Data of Aplastic Anemia and Healthy Donors</h3>
+<h4 class="author">Sophia Li</h4>
+<h4 class="date">2026-03-05</h4>
+
+</div>
+
+
+<div id="introduction" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Introduction</h1>
+<p>Non-severe aplastic anemia (non-SAA) is a rare hematologic disorder
+marked by bone marrow failure, leading to reduced blood cell production
+and increased susceptibility to infection and bleeding <span
+class="citation">(<a href="#ref-young_aplastic_2018">Young
+2018</a>)</span>. Characterizing the molecular changes underlying
+non-SAA is essential for understanding disease mechanisms and
+identifying potential therapeutic targets. Bulk RNA-sequencing (RNA-seq)
+is commonly used for this analysis, enabling profiling of global gene
+expression in patient-derived samples relative to healthy controls <span
+class="citation">(<a href="#ref-noauthor_rnaseq_nodate">Hrdlickova et
+al., n.d.</a>)</span>.</p>
+<p>A recent study by Zhu et al. used single-cell transcriptomics to
+dissect the molecular landscape of hematopoietic stem and progenitor
+cells (HSPCs) and T cells in patients with AA. The authors aimed to
+characterize lineage-specific gene expression alterations and
+transcriptional regulatory networks in residual HSPCs from AA patients
+and healthy controls at single-cell resolution. Included in this study
+was three primary data sets corresponding to full-length RNA-seq, 3’
+RNA-seq, and bulk RNA-seq of patients with severe (SAA) and non-severe
+aplastic anemia (non-SAA) and healthy donors. The study focused their
+analysis on the scRNA-seq datasets, whereas the bulk RNA-seq dataset was
+used for validation <span class="citation">(<a
+href="#ref-zhu_single-cell_2021">Zhu et al. 2021</a>)</span>.</p>
+<p>In our prior work, we re-analyzed the publically available bulk
+RNA-seq dataset of Lin⁻CD34⁺ bone marrow cells from non-SAA patients and
+healthy donors (GEO: GSE165870). The original dataset comprised six
+non-SAA patients and three healthy controls; following quality control,
+one control was removed as an outlier, resulting in eight samples for
+downstream analysis <span class="citation">(<a
+href="#ref-zhu_single-cell_2021">Zhu et al. 2021</a>)</span>.</p>
+<p>Low-count and duplicated genes were removed, and remaining counts
+were normalized using the Trimmed Mean of M-values (TMM) method to
+adjust for library size and compositional bias. After normalization,
+10,984 genes were retained. The top 500 most variable genes were
+selected for variance-based analyses to capture informative expression
+differences while minimizing noise. Samples exhibited consistent library
+complexity and expression profiles, with no evidence of technical
+artifacts or hidden replicates, supporting suitability for differential
+expression and pathway enrichment analyses.</p>
+<p>Differential expression analysis identified genes significantly up-
+or down-regulated in non-SAA patients relative to controls. This ranked
+gene list serves as the input for subsequent thresholded and
+non-thresholded gene set enrichment analyses, aiming to elucidate
+disease-associated pathways and processes.</p>
+<hr />
+</div>
+<div id="dataset-preparation" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Dataset
+Preparation</h1>
+<p>Our prior work done to prepare the dataset and perform differential
+analysis can be found <a
+href="https://bcb420-2026.github.io/Sophia_Li/A1_SophiaLi.html">here</a>.</p>
+<div id="data-importation" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> Data Importation</h2>
+<p>Dataset acquisition, cleaning, preprocessing, and differential
+expression analysis was previously performed in assignment 1. Thus, we
+will use the intermediate and final objects produced by the preceding
+assignment for this assignment. We begin our dataset pathway and network
+analysis by importing all packages needed for this analysis. We will use
+<code>gprofiler2</code> <span class="citation">(<a
+href="#ref-kolberg_gprofiler2_2020">Kolberg et al. 2020</a>)</span> to
+perform thresholded over-representation analysis and <code>dplyr</code>
+<span class="citation">(<a href="#ref-wickham_dplyr_2023">Wickham et al.
+2023</a>)</span>, <code>kableExtra</code> <span class="citation">(<a
+href="#ref-zhu_kableExtra">Zhu 2024</a>)</span>, <code>knitr</code>
+<span class="citation">(<a href="#ref-stodden_knitr_2014">Xie
+2014</a>)</span>, and <code>tibble</code> <span class="citation">(<a
+href="#ref-wickham_tibble">Müller and Wickham 2025</a>)</span> for
+general formatting.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(gprofiler2)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">library</span>(tibble)</span></code></pre></div>
+<p>Next, we’ll load our normalized counts data, metadata, and
+differential expression results from assignment 1. Our preprocessed and
+analyzed cohort consists of eight samples and 10983 genes.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Load the data from `.csv` format</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>aa_data   <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;A2_data/aa_normalized_data.csv&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>metadata  <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;A2_data/aa_metadata.csv&quot;</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>diff_expr <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;A2_data/aa_differential_expression.csv&quot;</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co"># Set the gene symbols as the index</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="fu">rownames</span>(aa_data)   <span class="ot">&lt;-</span> aa_data<span class="sc">$</span>X</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="fu">rownames</span>(metadata)  <span class="ot">&lt;-</span> metadata<span class="sc">$</span>X</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="fu">rownames</span>(diff_expr) <span class="ot">&lt;-</span> diff_expr<span class="sc">$</span>gene_symbol</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co"># Remove the gene symbol artifact (not differential expression)</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>aa_data<span class="sc">$</span>X  <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>metadata<span class="sc">$</span>X <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co"># Summarize the differential expression analysis results</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(diff_expr), <span class="at">format =</span> <span class="st">&quot;html&quot;</span>, <span class="at">caption =</span> <span class="st">&quot;Table 1: Differential expression analysis results of 10983 genes from assignment 1 using the `edgeR` package. Results include gene symbol, log fold-change (logFC), log counts-per-million (logCPM) logCPM, Quasi-Likelihood F-test statistic (F), p-value, and the false discovery rate (FDR) per gene.&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="st">&quot;striped&quot;</span>, <span class="at">full_width =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Table 1: Differential expression analysis results of 10983 genes from
+assignment 1 using the <code>edgeR</code> package. Results include gene
+symbol, log fold-change (logFC), log counts-per-million (logCPM) logCPM,
+Quasi-Likelihood F-test statistic (F), p-value, and the false discovery
+rate (FDR) per gene.
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+gene_symbol
+</th>
+<th style="text-align:right;">
+logFC
+</th>
+<th style="text-align:right;">
+logCPM
+</th>
+<th style="text-align:right;">
+F
+</th>
+<th style="text-align:right;">
+PValue
+</th>
+<th style="text-align:right;">
+FDR
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+MYCT1
+</td>
+<td style="text-align:left;">
+MYCT1
+</td>
+<td style="text-align:right;">
+-5.549074
+</td>
+<td style="text-align:right;">
+5.503509
+</td>
+<td style="text-align:right;">
+55.02337
+</td>
+<td style="text-align:right;">
+1.00e-07
+</td>
+<td style="text-align:right;">
+0.0015118
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+C3orf80
+</td>
+<td style="text-align:left;">
+C3orf80
+</td>
+<td style="text-align:right;">
+-5.180615
+</td>
+<td style="text-align:right;">
+4.178397
+</td>
+<td style="text-align:right;">
+38.15200
+</td>
+<td style="text-align:right;">
+1.40e-06
+</td>
+<td style="text-align:right;">
+0.0076881
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+EREG
+</td>
+<td style="text-align:left;">
+EREG
+</td>
+<td style="text-align:right;">
+-3.110972
+</td>
+<td style="text-align:right;">
+7.347129
+</td>
+<td style="text-align:right;">
+46.32838
+</td>
+<td style="text-align:right;">
+2.10e-06
+</td>
+<td style="text-align:right;">
+0.0076881
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CXCL2
+</td>
+<td style="text-align:left;">
+CXCL2
+</td>
+<td style="text-align:right;">
+-4.197923
+</td>
+<td style="text-align:right;">
+6.010751
+</td>
+<td style="text-align:right;">
+42.82119
+</td>
+<td style="text-align:right;">
+3.00e-06
+</td>
+<td style="text-align:right;">
+0.0083700
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HLF
+</td>
+<td style="text-align:left;">
+HLF
+</td>
+<td style="text-align:right;">
+-11.060942
+</td>
+<td style="text-align:right;">
+4.565164
+</td>
+<td style="text-align:right;">
+56.32877
+</td>
+<td style="text-align:right;">
+3.90e-06
+</td>
+<td style="text-align:right;">
+0.0085911
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ST6GAL2
+</td>
+<td style="text-align:left;">
+ST6GAL2
+</td>
+<td style="text-align:right;">
+-5.854468
+</td>
+<td style="text-align:right;">
+4.406744
+</td>
+<td style="text-align:right;">
+29.25063
+</td>
+<td style="text-align:right;">
+1.18e-05
+</td>
+<td style="text-align:right;">
+0.0215475
+</td>
+</tr>
+</tbody>
+</table>
+<hr />
+</div>
+</div>
+<div id="thresholded-overrepresentation-analysis" class="section level1"
+number="3">
+<h1><span class="header-section-number">3</span> Thresholded
+Over-Representation Analysis</h1>
+<p>Over-representation analysis (ORA), also known as thresholded
+enrichment analysis, evaluates whether specific gene sets are
+statistically over-represented among differentially expressed genes.
+This is assessed by comparing the observed overlap between a gene set
+and the list of significant genes to the expected overlap under a random
+distribution. Performing ORA requires defining a threshold of
+significance to classify genes as enriched or depleted in the disease
+condition <span class="citation">(<a href="#ref-isserlin_2026">Isserlin
+2026</a>)</span>. In the following sub-sections, we will perform ORA on
+the upregulated, downregulated, and all differentially expressed genes
+we previously identified in assignment 1.</p>
+<p>We will perform ORA using the <code>gprofiler2</code> package
+(version 0.2.4) <span class="citation">(<a
+href="#ref-kolberg_gprofiler2_2020">Kolberg et al. 2020</a>)</span>, a
+widely used and actively maintained tool for threshold enrichment. This
+method was chosen because it is highlighted in lecture material, where
+comprehensive tutorials were provided. Gene annotations will be drawn
+from GO Biological Processes (release 2025-03-16) <span
+class="citation">(<a href="#ref-gobp">The Gene Ontology Consortium
+2021</a>)</span>, Reactome (release 2025-05-23) <span
+class="citation">(<a href="#ref-reactome">Jassal et al.
+2020</a>)</span>, and KEGG (release 2024-01-22) <span
+class="citation">(<a href="#ref-kegg">Kanehisa et al. 2021</a>)</span>
+databases, selected for their broad coverage of pathways relevant to
+bulk RNA-seq studies. These annotation databases are both widely used
+and curated for pathway analysis, as well as actively maintained <span
+class="citation">(<a href="#ref-muley_functional_2025">Muley
+2025</a>)</span>.</p>
+<p>The original study did not perform ORA; therefore, the selection of
+method and annotation sources reflects informed methodological choices
+to enable meaningful pathway-level interpretation <span
+class="citation">(<a href="#ref-zhu_single-cell_2021">Zhu et al.
+2021</a>)</span>.</p>
+<div id="gene-set-definition" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> Gene Set
+Definition</h2>
+<p>To perform ORA, we must first define sets of upregulated and
+downregulated genes from the differentially expressed gene list.
+Thresholds are typically based on both statistical significance
+(p-values) and effect size (fold-change) <span class="citation">(<a
+href="#ref-isserlin_2026">Isserlin 2026</a>)</span>. While false
+discovery rate (FDR)-adjusted p-values are standard, our previous
+analysis identified only eight downregulated and no upregulated genes
+after FDR correction. This is insufficient for ORA, as extremely small
+gene sets produce unstable enrichment results . <span
+class="citation">(<a href="#ref-genovese_2026">Christopher et al.,
+n.d.</a>)</span>.</p>
+<p>To enable exploratory pathway discovery, we applied a more permissive
+FDR threshold of &lt; 0.25. Genes with log₂ fold-change &gt; 1.0 were
+classified as upregulated, and those with log₂ fold-change &lt; -1.0 as
+downregulated. These criteria balance statistical stringency with
+adequate gene set size for meaningful over-representation analysis <span
+class="citation">(<a href="#ref-reiner_identifying_2003">Reiner et al.
+2003</a>)</span>.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Define the upregulated, downregulated, and all gene sets with the thresholds</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>upregulated_genes   <span class="ot">&lt;-</span> diff_expr<span class="sc">$</span>gene_symbol[<span class="fu">which</span>(diff_expr<span class="sc">$</span>FDR <span class="sc">&lt;</span> <span class="fl">0.25</span> <span class="sc">&amp;</span> diff_expr<span class="sc">$</span>logFC <span class="sc">&gt;</span> <span class="fl">1.0</span>)]</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>downregulated_genes <span class="ot">&lt;-</span> diff_expr<span class="sc">$</span>gene_symbol[<span class="fu">which</span>(diff_expr<span class="sc">$</span>FDR <span class="sc">&lt;</span> <span class="fl">0.25</span> <span class="sc">&amp;</span> diff_expr<span class="sc">$</span>logFC <span class="sc">&lt;</span> <span class="sc">-</span><span class="fl">1.0</span>)]</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>ora_geneset <span class="ot">&lt;-</span> <span class="fu">union</span>(upregulated_genes, downregulated_genes)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">tibble</span>(</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">category =</span> <span class="fu">c</span>(<span class="st">&quot;Upregulated DE Genes&quot;</span>,</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>               <span class="st">&quot;Downregulated DE Genes&quot;</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>               <span class="st">&quot;All DE Genes Genes&quot;</span>),</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  <span class="at">n        =</span> <span class="fu">c</span>(<span class="fu">length</span>(upregulated_genes),</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>               <span class="fu">length</span>(downregulated_genes),</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>               <span class="fu">length</span>(ora_geneset)), </span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>), <span class="at">format =</span> <span class="st">&quot;html&quot;</span>, <span class="at">caption =</span> <span class="st">&quot;Table 2: Summary of gene sets (FDR &lt; 0.25, logFC &gt; 1.0 / logFC &lt; -1.0) used for thresholded over-representation analysis (ORA).&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="st">&quot;striped&quot;</span>, <span class="at">full_width =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Table 2: Summary of gene sets (FDR &lt; 0.25, logFC &gt; 1.0 / logFC
+&lt; -1.0) used for thresholded over-representation analysis (ORA).
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+category
+</th>
+<th style="text-align:right;">
+n
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Upregulated DE Genes
+</td>
+<td style="text-align:right;">
+24
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Downregulated DE Genes
+</td>
+<td style="text-align:right;">
+59
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+All DE Genes Genes
+</td>
+<td style="text-align:right;">
+83
+</td>
+</tr>
+</tbody>
+</table>
+<p>After applying the exploratory thresholds (FDR &lt; 0.25; log₂
+fold-change &gt; 1.0 or &lt; -1.0), 24 genes were classified as
+upregulated and 59 as downregulated. Although the upregulated gene set
+is small, the analysis remains interpretable, albeit with limited
+stability, and results should be treated with caution <span
+class="citation">(<a href="#ref-reiner_identifying_2003">Reiner et al.
+2003</a>)</span>.</p>
+</div>
+<div id="analysis-of-upregulated-genes" class="section level2"
+number="3.2">
+<h2><span class="header-section-number">3.2</span> Analysis of
+Upregulated Genes</h2>
+<p>We begin our ORA analysis by analyzing the upregulated gene set.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Run the `g:Profiler` package on the upregulated genes as the query set</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>upreg_gprofiler_results <span class="ot">&lt;-</span> <span class="fu">gost</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">query             =</span> upregulated_genes,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">significant       =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">ordered_query     =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">exclude_iea       =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">correction_method =</span> <span class="st">&quot;fdr&quot;</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">organism          =</span> <span class="st">&quot;hsapiens&quot;</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>  <span class="at">sources           =</span> <span class="fu">c</span>(<span class="st">&quot;GO:BP&quot;</span>, <span class="st">&quot;REAC&quot;</span>, <span class="st">&quot;KEGG&quot;</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>)</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co"># Parse the ORA results into a cleaned dataframe</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>upreg_ora_results <span class="ot">&lt;-</span> upreg_gprofiler_results<span class="sc">$</span>result <span class="sc">%&gt;%</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>query, <span class="sc">-</span>significant, <span class="sc">-</span>parents, <span class="sc">-</span>source_order, <span class="sc">-</span>recall,</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>         <span class="sc">-</span>effective_domain_size)</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="fu">kable</span>(upreg_ora_results, <span class="at">format =</span> <span class="st">&quot;html&quot;</span>, <span class="at">caption =</span> <span class="st">&quot;Table 3: Thresholded over-representation analysis (ORA) results of upregulated genes (FDR &lt; 0.25, logFC &gt; 1.0). Eight significant terms are identified in Go Biological Process.&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="st">&quot;striped&quot;</span>, <span class="at">full_width =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Table 3: Thresholded over-representation analysis (ORA) results of
+upregulated genes (FDR &lt; 0.25, logFC &gt; 1.0). Eight significant
+terms are identified in Go Biological Process.
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+p_value
+</th>
+<th style="text-align:right;">
+term_size
+</th>
+<th style="text-align:right;">
+query_size
+</th>
+<th style="text-align:right;">
+intersection_size
+</th>
+<th style="text-align:right;">
+precision
+</th>
+<th style="text-align:left;">
+term_id
+</th>
+<th style="text-align:left;">
+source
+</th>
+<th style="text-align:left;">
+term_name
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.0143209
+</td>
+<td style="text-align:right;">
+2190
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+10
+</td>
+<td style="text-align:right;">
+0.50
+</td>
+<td style="text-align:left;">
+<a href="GO:0002376" class="uri">GO:0002376</a>
+</td>
+<td style="text-align:left;">
+<a href="GO:BP" class="uri">GO:BP</a>
+</td>
+<td style="text-align:left;">
+immune system process
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0143209
+</td>
+<td style="text-align:right;">
+76
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:left;">
+<a href="GO:0042100" class="uri">GO:0042100</a>
+</td>
+<td style="text-align:left;">
+<a href="GO:BP" class="uri">GO:BP</a>
+</td>
+<td style="text-align:left;">
+B cell proliferation
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0143209
+</td>
+<td style="text-align:right;">
+201
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:left;">
+<a href="GO:0042113" class="uri">GO:0042113</a>
+</td>
+<td style="text-align:left;">
+<a href="GO:BP" class="uri">GO:BP</a>
+</td>
+<td style="text-align:left;">
+B cell activation
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0143209
+</td>
+<td style="text-align:right;">
+57
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:left;">
+<a href="GO:0050853" class="uri">GO:0050853</a>
+</td>
+<td style="text-align:left;">
+<a href="GO:BP" class="uri">GO:BP</a>
+</td>
+<td style="text-align:left;">
+B cell receptor signaling pathway
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0373322
+</td>
+<td style="text-align:right;">
+1585
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+0.40
+</td>
+<td style="text-align:left;">
+<a href="GO:0006955" class="uri">GO:0006955</a>
+</td>
+<td style="text-align:left;">
+<a href="GO:BP" class="uri">GO:BP</a>
+</td>
+<td style="text-align:left;">
+immune response
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0375036
+</td>
+<td style="text-align:right;">
+851
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+0.30
+</td>
+<td style="text-align:left;">
+<a href="GO:0001775" class="uri">GO:0001775</a>
+</td>
+<td style="text-align:left;">
+<a href="GO:BP" class="uri">GO:BP</a>
+</td>
+<td style="text-align:left;">
+cell activation
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0428806
+</td>
+<td style="text-align:right;">
+1289
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+0.35
+</td>
+<td style="text-align:left;">
+<a href="GO:0002682" class="uri">GO:0002682</a>
+</td>
+<td style="text-align:left;">
+<a href="GO:BP" class="uri">GO:BP</a>
+</td>
+<td style="text-align:left;">
+regulation of immune system process
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0428806
+</td>
+<td style="text-align:right;">
+595
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:left;">
+<a href="GO:0046649" class="uri">GO:0046649</a>
+</td>
+<td style="text-align:left;">
+<a href="GO:BP" class="uri">GO:BP</a>
+</td>
+<td style="text-align:left;">
+lymphocyte activation
+</td>
+</tr>
+</tbody>
+</table>
+<p>Over-representation analysis of the upregulated gene set returned
+eight significant GO Biological Process terms, all related to immune
+function, including B cell activation, proliferation, and receptor
+signaling, as well as general immune and lymphocyte activation
+processes. No significant pathways were identified from Reactome or
+KEGG. These results suggest that upregulated genes in non-SAA samples
+are primarily associated with adaptive immune system activity <span
+class="citation">(<a
+href="#ref-pakoszebrucka_integrated_2016">Pakos‐Zebrucka et al.
+2016</a>)</span>.</p>
+</div>
+<div id="analysis-of-downregulated-genes" class="section level2"
+number="3.3">
+<h2><span class="header-section-number">3.3</span> Analysis of
+Downregulated Genes</h2>
+<p>We continue our ORA analysis by analyzing the downregulated gene set.
+Notably, we saw that all significantly differentially expressed genes
+identified in assignment 1 with a threshold of FDR &lt; 0.05 were
+downregulated. While we are currently using an exploratory set of
+downregulated genes with a looser threshold for significance, our
+results will still be informative regarding the expression profiles
+between our disease groups.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Run the `g:Profiler` package on the downregulated genes as the query set</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>downreg_gprofiler_results <span class="ot">&lt;-</span> <span class="fu">gost</span>(</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">query             =</span> downregulated_genes,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">significant       =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">ordered_query     =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">exclude_iea       =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">correction_method =</span> <span class="st">&quot;fdr&quot;</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="at">organism          =</span> <span class="st">&quot;hsapiens&quot;</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="at">sources           =</span> <span class="fu">c</span>(<span class="st">&quot;GO:BP&quot;</span>, <span class="st">&quot;REAC&quot;</span>, <span class="st">&quot;KEGG&quot;</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>)</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co"># Parse the ORA results into a cleaned dataframe</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>downreg_ora_results <span class="ot">&lt;-</span> downreg_gprofiler_results<span class="sc">$</span>result <span class="sc">%&gt;%</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>query, <span class="sc">-</span>significant, <span class="sc">-</span>parents, <span class="sc">-</span>source_order, <span class="sc">-</span>recall,</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>         <span class="sc">-</span>effective_domain_size)</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="fu">kable</span>(downreg_ora_results, <span class="at">format =</span> <span class="st">&quot;html&quot;</span>, <span class="at">caption =</span> <span class="st">&quot;Table 4: Thresholded over-representation analysis (ORA) results of downregulated genes (FDR &lt; 0.25, logFC &lt; -1.0). Eight significant terms are identified in Reactome.&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="st">&quot;striped&quot;</span>, <span class="at">full_width =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Table 4: Thresholded over-representation analysis (ORA) results of
+downregulated genes (FDR &lt; 0.25, logFC &lt; -1.0). Eight significant
+terms are identified in Reactome.
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+p_value
+</th>
+<th style="text-align:right;">
+term_size
+</th>
+<th style="text-align:right;">
+query_size
+</th>
+<th style="text-align:right;">
+intersection_size
+</th>
+<th style="text-align:right;">
+precision
+</th>
+<th style="text-align:left;">
+term_id
+</th>
+<th style="text-align:left;">
+source
+</th>
+<th style="text-align:left;">
+term_name
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.0225095
+</td>
+<td style="text-align:right;">
+105
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0.1025641
+</td>
+<td style="text-align:left;">
+REAC:R-HSA-8856825
+</td>
+<td style="text-align:left;">
+REAC
+</td>
+<td style="text-align:left;">
+Cargo recognition for clathrin-mediated endocytosis
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0225095
+</td>
+<td style="text-align:right;">
+145
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+0.1282051
+</td>
+<td style="text-align:left;">
+REAC:R-HSA-8856828
+</td>
+<td style="text-align:left;">
+REAC
+</td>
+<td style="text-align:left;">
+Clathrin-mediated endocytosis
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0225095
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.0512821
+</td>
+<td style="text-align:left;">
+REAC:R-HSA-212718
+</td>
+<td style="text-align:left;">
+REAC
+</td>
+<td style="text-align:left;">
+EGFR interacts with phospholipase C-gamma
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0225095
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.0512821
+</td>
+<td style="text-align:left;">
+REAC:R-HSA-5638303
+</td>
+<td style="text-align:left;">
+REAC
+</td>
+<td style="text-align:left;">
+Inhibition of Signaling by Overexpressed EGFR
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0225095
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.0512821
+</td>
+<td style="text-align:left;">
+REAC:R-HSA-5638302
+</td>
+<td style="text-align:left;">
+REAC
+</td>
+<td style="text-align:left;">
+Signaling by Overexpressed Wild-Type EGFR in Cancer
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0248508
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.0512821
+</td>
+<td style="text-align:left;">
+REAC:R-HSA-179812
+</td>
+<td style="text-align:left;">
+REAC
+</td>
+<td style="text-align:left;">
+GRB2 events in EGFR signaling
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0255036
+</td>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.0512821
+</td>
+<td style="text-align:left;">
+REAC:R-HSA-180336
+</td>
+<td style="text-align:left;">
+REAC
+</td>
+<td style="text-align:left;">
+SHC1 events in EGFR signaling
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0402122
+</td>
+<td style="text-align:right;">
+16
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.0512821
+</td>
+<td style="text-align:left;">
+REAC:R-HSA-180292
+</td>
+<td style="text-align:left;">
+REAC
+</td>
+<td style="text-align:left;">
+GAB1 signalosome
+</td>
+</tr>
+</tbody>
+</table>
+<p>Over-representation analysis of the downregulated gene set returned
+eight significant Reactome pathways, all related to EGFR signaling and
+clathrin-mediated endocytosis. No significant pathways were identified
+from GO Biological Process terms or KEGG. These findings indicate that
+genes with reduced expression in non-SAA samples are associated with
+receptor-mediated signaling and intracellular trafficking processes,
+suggesting potential alterations in growth factor signaling and
+endocytic regulation between disease and control groups <span
+class="citation">(<a
+href="#ref-pakoszebrucka_integrated_2016">Pakos‐Zebrucka et al.
+2016</a>)</span>.</p>
+</div>
+<div id="analysis-of-all-significant-genes" class="section level2"
+number="3.4">
+<h2><span class="header-section-number">3.4</span> Analysis of All
+Significant Genes</h2>
+<p>Finally, we conclude our ORA analysis by analyzing all differentially
+expressed genes in our exploratory set.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Run the `g:Profiler` package on the downregulated genes as the query set</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>ora_gprofiler_results <span class="ot">&lt;-</span> <span class="fu">gost</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">query             =</span> ora_geneset,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">significant       =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">ordered_query     =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="at">exclude_iea       =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">correction_method =</span> <span class="st">&quot;fdr&quot;</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="at">organism          =</span> <span class="st">&quot;hsapiens&quot;</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  <span class="at">sources           =</span> <span class="fu">c</span>(<span class="st">&quot;GO:BP&quot;</span>, <span class="st">&quot;REAC&quot;</span>, <span class="st">&quot;KEGG&quot;</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>)</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co"># Parse the ORA results into a cleaned dataframe</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>ora_results <span class="ot">&lt;-</span> ora_gprofiler_results<span class="sc">$</span>result <span class="sc">%&gt;%</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>query, <span class="sc">-</span>significant, <span class="sc">-</span>parents, <span class="sc">-</span>source_order, <span class="sc">-</span>recall,</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>         <span class="sc">-</span>effective_domain_size)</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="fu">kable</span>(ora_results, <span class="at">format =</span> <span class="st">&quot;html&quot;</span>, <span class="at">caption =</span> <span class="st">&quot;Table 5: Thresholded over-representation analysis (ORA) results of all differentially expressed genes (FDR &lt; 0.25, |logFC| &gt; 1.0). Eight significant terms are identified in Go Biological Process.&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="st">&quot;striped&quot;</span>, <span class="at">full_width =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Table 5: Thresholded over-representation analysis (ORA) results of all
+differentially expressed genes (FDR &lt; 0.25, |logFC| &gt; 1.0). Eight
+significant terms are identified in Go Biological Process.
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+p_value
+</th>
+<th style="text-align:right;">
+term_size
+</th>
+<th style="text-align:right;">
+query_size
+</th>
+<th style="text-align:right;">
+intersection_size
+</th>
+<th style="text-align:right;">
+precision
+</th>
+<th style="text-align:left;">
+term_id
+</th>
+<th style="text-align:left;">
+source
+</th>
+<th style="text-align:left;">
+term_name
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.0182622
+</td>
+<td style="text-align:right;">
+16
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.0545455
+</td>
+<td style="text-align:left;">
+REAC:R-HSA-180292
+</td>
+<td style="text-align:left;">
+REAC
+</td>
+<td style="text-align:left;">
+GAB1 signalosome
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0499064
+</td>
+<td style="text-align:right;">
+145
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+0.0909091
+</td>
+<td style="text-align:left;">
+REAC:R-HSA-8856828
+</td>
+<td style="text-align:left;">
+REAC
+</td>
+<td style="text-align:left;">
+Clathrin-mediated endocytosis
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0499064
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.0363636
+</td>
+<td style="text-align:left;">
+REAC:R-HSA-212718
+</td>
+<td style="text-align:left;">
+REAC
+</td>
+<td style="text-align:left;">
+EGFR interacts with phospholipase C-gamma
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0499064
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.0363636
+</td>
+<td style="text-align:left;">
+REAC:R-HSA-5638303
+</td>
+<td style="text-align:left;">
+REAC
+</td>
+<td style="text-align:left;">
+Inhibition of Signaling by Overexpressed EGFR
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.0499064
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.0363636
+</td>
+<td style="text-align:left;">
+REAC:R-HSA-5638302
+</td>
+<td style="text-align:left;">
+REAC
+</td>
+<td style="text-align:left;">
+Signaling by Overexpressed Wild-Type EGFR in Cancer
+</td>
+</tr>
+</tbody>
+</table>
+<p>Over-representation analysis of the combined exploratory gene set
+returned five Reactome pathways, all related to EGFR signaling and
+clathrin-mediated endocytosis. This result is somewhat unexpected, as
+pathways are typically enriched in either up- or down-regulated genes
+rather than a mixed set. The small pathway sizes and limited gene
+overlap suggest these findings are marginal and should be interpreted
+cautiously, as they may reflect stochastic effects rather than robust
+biological trends <span class="citation">(<a
+href="#ref-hong_separate_2014">Hong et al. 2014</a>)</span>.</p>
+</div>
+<div id="interpretation-thresholded" class="section level2"
+number="3.5">
+<h2><span class="header-section-number">3.5</span> Interpretation</h2>
+<div id="summary-of-results-thresholded" class="section level3"
+number="3.5.1">
+<h3><span class="header-section-number">3.5.1</span> Summary of
+Results</h3>
+<p>Thresholded over-representation enrichment analysis using
+<code>g:profiler</code> <span class="citation">(<a
+href="#ref-kolberg_gprofiler2_2020">Kolberg et al. 2020</a>)</span> of
+the differentially expressed genes from assignment 1 revealed broad
+patterns of pathway activation and representation between on-SAA and
+healthy samples in our cohort. Exploratory thresholds (FDR &lt; 0.25;
+log₂ fold-change &gt; 1.0 or &lt; -1.0) were used to define the
+upregulated and downregulated gene sets, composed of 24 and 59 genes
+respectively.</p>
+<p>Analysis of the upregulated gene set resulted in eight significant
+terms from GO Biological Process, all of which relating to immune
+function. This included B cell activation, proliferation, and receptor
+signaling, as well as general immune and lymphocyte activation
+processes.</p>
+<p>Analysis of the downregulated gene set resulted in eight significant
+terms from Reactome, all of which relating to EGFR signaling and
+clathrin-mediated endocytosis.</p>
+<p>Analysis of the full exploratory set of differentially expressed
+genes resulted in five significant terms from Reactome, all of which
+relating to EGFR signaling and clathrin-mediated endocytosis. All
+significant terms identified in the full set overlap with the terms
+identified in the analysis of the downregulated gene set.</p>
+</div>
+<div id="analysis-by-direction" class="section level3" number="3.5.2">
+<h3><span class="header-section-number">3.5.2</span> Analysis by
+Direction</h3>
+<p>Analysis of the combined gene set primarily recapitulated the
+downregulated pathways, implying that enrichment is being driven by
+downregulated genes. Downregulated genes dominated the differentially
+expressed list when applying the exploratory thresholds, thus resulting
+in stronger over-representation statistics. This is especially true when
+the upregulated and downregulated gene sets are analyzed separately,
+where we identified eight enriched pathways when analyzing downregulated
+genes separately and only five when analyzed together <span
+class="citation">(<a href="#ref-hong_separate_2014">Hong et al.
+2014</a>)</span>.</p>
+<p>Genes within pathways tend to be positively co-expressed, thus
+leading to an imbalance in up versus down differentially expressed genes
+in specific pathways. Analyzing all differentially expressed genes in
+our exploratory set together can dilute the directional signal and
+reduce statistical power in detecting enrichment, while separate
+analysis recovers more biologically relevant pathways <span
+class="citation">(<a href="#ref-hong_separate_2014">Hong et al.
+2014</a>)</span>.</p>
+</div>
+<div id="comparison-with-original-paper-thresholded"
+class="section level3" number="3.5.3">
+<h3><span class="header-section-number">3.5.3</span> Comparison with
+Original Paper</h3>
+<p>These observations are broadly consistent with the original study and
+are capturing a more specific and upstream layer of regulation that
+likely feeds into the broader outcomes that they describe. Our
+enrichment results are more mechanistic than the paper’s higher-level
+summary of regulation in non-SAA patients, highlighting immune
+activation and dampened growth-factor/endocytic signaling.</p>
+<p>The upregulation of B cell activation, proliferation, receptor
+signaling, and general lymphocyte activation fully aligns with the
+original study’s reported regulation of cell death, cytokine signaling,
+and immune activation. B-cell receptor, co-stimulatory, and cytokine
+pathways are tightly integrated, and serve as more granular terms that
+refine the broader statement of immune and cytokine signaling <span
+class="citation">(<a href="#ref-li_transcriptional_2017">Li et al.
+2017</a>)</span>.</p>
+<p>The downregulation of EGFR and signaling and clathrin-mediated
+endocytosis supports proliferation, survival, and cell cycle
+progression, being directionally consistent with the shift towards
+reduced cell cycle activity and increased cell death susceptibility
+reported in the original study. Clathrin-mediated endocytosis is
+critical for receptor internalization (including EGFR) and for
+trafficking many signaling receptors, where its repression is frequently
+altered in disease transcriptomics alongside cell cycle and
+differentiation pathways. Furthermore, large-scale changes in RNA
+processing, including alternative splicing and polyadenylation as
+reported in the original study, often co-occur with changes in growth
+factor signaling and endocytic machinery as part of a broader
+reprogramming of cell fate and proliferation <span class="citation">(<a
+href="#ref-li_transcriptional_2017">Li et al. 2017</a>)</span>.</p>
+</div>
+<div id="support-of-findings-thresholded" class="section level3"
+number="3.5.4">
+<h3><span class="header-section-number">3.5.4</span> Support of
+Findings</h3>
+<p>Multiple studies have shown strong activation of adaptive immunity,
+enhanced cell-cell immune interactions, and antigen-presenting cells in
+both severe and non-severe AA. While they often emphasize T and myeloid
+compartments, they consistently show global immune activation which
+aligns with our findings. Particularly, our enrichment of B-cell
+activation, lymphocyte activation, and receptor signaling biologically
+plausible within the same immune-driven framework <span
+class="citation">(<a href="#ref-young_aplastic_2018">Young
+2018</a>)</span>.</p>
+<p>In contrast, AA literature primarily focuses on TGF‑β, JAK/STAT,
+VEGF–Notch and immune checkpoints, rather than EGFR signaling <span
+class="citation">(<a href="#ref-zhang_tgf-_2025">Zhang et al.
+2025</a>)</span>. While EGFR and its endocytic control are well-known
+regulators of cell proliferation and survival, reduced EGFR signaling
+can favour impaired hematopoeisis and increased vulnerability to
+immune-mediated damage <span class="citation">(<a
+href="#ref-vieira_control_1996">Vieira et al. 1996</a>)</span>.
+Furthermore, clathrin-mediated and non-clathrin EGFR endocytosis are
+critical determinants of downstream EGFR signaling strength and fate
+decisions <span class="citation">(<a
+href="#ref-vieira_control_1996">Vieira et al. 1996</a>)</span>. Thus,
+while no AA study directly reports global repression of these pathways,
+they appear as novel but mechanistically coherent with the disease.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">rm</span>(upreg_gprofiler_results, downreg_gprofiler_results, ora_gprofiler_results,</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>   downregulated_genes, ora_geneset, upregulated_genes, downreg_ora_results,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>   ora_results, upreg_ora_results)</span></code></pre></div>
+<hr />
+</div>
+</div>
+</div>
+<div id="nonthresholded-gene-set-enrichment-analysis"
+class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Non-Thresholded Gene
+Set Enrichment Analysis</h1>
+<div id="gsea-analysis" class="section level2" number="4.1">
+<h2><span class="header-section-number">4.1</span> GSEA Analysis</h2>
+<p>Gene Set Enrichment Analysis (GSEA) provides a complementary approach
+to over-representation analysis by evaluating the enrichment of gene
+sets across the entire ranked list of genes, rather than relying on an
+arbitrary threshold to define up- and downregulated subsets <span
+class="citation">(<a href="#ref-GSEA2005">Subramanian et al.
+2005</a>)</span>. For our analysis, all genes identified as
+differentially expressed in assignment 1 will be ranked ranked using a
+signed statistic derived from both p-value and fold-change. This ranking
+preserves the directionality and magnitude of expression changes,
+enabling detection of coordinated pathway-level signals that may be
+subtle or distributed across multiple genes <span class="citation">(<a
+href="#ref-isserlin_2026">Isserlin 2026</a>)</span>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Rank the differentially expressed genes by ranking score (p-value &amp; FC)</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>ranked_genes <span class="ot">&lt;-</span> diff_expr <span class="sc">%&gt;%</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">rank =</span> <span class="sc">-</span><span class="fu">log10</span>(PValue) <span class="sc">*</span> <span class="fu">sign</span>(logFC)) <span class="sc">%&gt;%</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="fu">select</span>(gene_symbol, rank) <span class="sc">%&gt;%</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(rank))</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co"># Rename the gene_symbol column to gene for compatibility with GSEA</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="fu">colnames</span>(ranked_genes)[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&quot;gene&quot;</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co"># Save the ranked genes as a `.rnk` file for GSEA</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>rnk_file <span class="ot">&lt;-</span> <span class="st">&quot;A2_data/aa_vs_healthy.rnk&quot;</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(rnk_file)) {</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  <span class="fu">write.table</span>(</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>    ranked_genes,</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>    <span class="at">file      =</span> rnk_file,</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>    <span class="at">sep       =</span> <span class="st">&quot;</span><span class="sc">\t</span><span class="st">&quot;</span>,</span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>    <span class="at">row.names =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>    <span class="at">quote     =</span> <span class="cn">FALSE</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>  )</span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>}</span></code></pre></div>
+<p>Pathway-level interpretation of GSEA requires a curated collection of
+gene sets <span class="citation">(<a href="#ref-isserlin_2026">Isserlin
+2026</a>)</span>. For this analysis, we utilized the September 1, 2025
+release of the gene sets provided by the Bader laboratory <span
+class="citation">(<a href="#ref-BaderLab2025">Bader Lab, University of
+Toronto 2025</a>; <a href="#ref-MSigDB2015">Liberzon et al.
+2015</a>)</span>. This specific release was selected deliberately: while
+a more recent release (March 2, 2026) was available at the time of
+analysis, it contains duplicate gene set names and is not provided in
+standard GMT format, which precludes correct export and integration into
+the GSEA workflow. A similar issue was brought up on the course
+discussion board that has not yet been responded to by instructors as of
+March 8, two days before the assignment deadline. Thus, we will proceed
+with using the prior release. Using the September 2025 release ensures
+compatibility with standard GSEA tools and preserves the integrity of
+gene set annotations <span class="citation">(<a
+href="#ref-BaderLab2025">Bader Lab, University of Toronto
+2025</a>)</span>.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Fetch the (09/01/2025) release from when this analysis was performed </span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>gmt_url       <span class="ot">=</span> <span class="st">&quot;https://download.baderlab.org/EM_Genesets/September_01_2025/Human/symbol/&quot;</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>gmt_file      <span class="ot">=</span> <span class="st">&quot;Human_GOBP_AllPathways_noPFOCR_no_GO_iea_September_01_2025_symbol.gmt&quot;</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>dest_gmt_file <span class="ot">=</span> <span class="fu">file.path</span>(<span class="st">&quot;/home/rstudio/projects/A2_data&quot;</span>, gmt_file)</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co"># Download the geneset if its not found at the specified destination</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(dest_gmt_file)) {</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="fu">download.file</span>(</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>    <span class="fu">paste</span>(gmt_url, gmt_file, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>),</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>    <span class="at">destfile =</span> dest_gmt_file</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  )</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>}</span></code></pre></div>
+<p>We will perform enrichment analysis using the standalone GSEA CLI
+(version 4.4.0) using a system cell <span class="citation">(<a
+href="#ref-GSEA2005">Subramanian et al. 2005</a>)</span>. The pre-ranked
+method will be used with the list we have generated, with 1000
+permutations, a weighted scoring scheme, gene set size limits of 15-200
+genes, and a fixed random seed of 12345 to ensure reproducibility.</p>
+<p>To avoid rerunning the computationally intensive analysis during
+document compilation, the <code>run_gsea</code> flag is set to FALSE;
+setting it to TRUE triggers a new execution. All analyses were conducted
+within the bcb420-winter-2026 Docker environment, which contains the
+required GSEA CLI .sh executable, ensuring a consistent and reproducible
+computational environment <span class="citation">(<a
+href="#ref-GSEA2005">Subramanian et al. 2005</a>; <a
+href="#ref-isserlin_2026">Isserlin 2026</a>)</span>.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Set this to TRUE to run a new instance of GSEA</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>run_gsea <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co"># Set GSEA parameters based on your current directory paths</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>analysis_name <span class="ot">&lt;-</span> <span class="st">&quot;aa_vs_healthy&quot;</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>working_dir   <span class="ot">&lt;-</span> <span class="st">&quot;./&quot;</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>output_dir    <span class="ot">&lt;-</span> <span class="st">&quot;./A2_gsea_results&quot;</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>gsea_jar      <span class="ot">&lt;-</span> <span class="st">&quot;/home/rstudio/GSEA_4.4.0/gsea-cli.sh&quot;</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co"># Run a new instance of GSEA if toggled</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="cf">if</span> (run_gsea) {</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>  command <span class="ot">&lt;-</span> <span class="fu">paste</span>(</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>    <span class="st">&quot;&quot;</span>, gsea_jar,  </span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>    <span class="st">&quot;GSEAPreRanked -gmx&quot;</span>, dest_gmt_file, </span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>    <span class="st">&quot;-rnk&quot;</span>, <span class="fu">file.path</span>(working_dir, rnk_file), </span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>    <span class="st">&quot;-collapse false -nperm 1000 -scoring_scheme weighted&quot;</span>, </span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>    <span class="st">&quot;-rpt_label &quot;</span>, analysis_name,</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>    <span class="st">&quot;  -plot_top_x 20 -rnd_seed 12345  -set_max 200&quot;</span>,  </span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>    <span class="st">&quot; -set_min 15 -zip_report false &quot;</span>,</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>    <span class="st">&quot; -out&quot;</span>, output_dir, </span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>    <span class="st">&quot; &gt; gsea_output.txt&quot;</span>, <span class="at">sep =</span> <span class="st">&quot; &quot;</span></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>  )</span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>  <span class="fu">system</span>(command)</span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>}</span></code></pre></div>
+<p>The system call to GSEA will output its results into an
+<code>HTML</code> file which we will parse. If a new GSEA query was
+performed, update the value of <code>gsea_results_dir</code> with the
+outputted directory name to properly display the results.</p>
+<iframe src="./A2_gsea_results/aa_vs_healthy.GseaPreranked.1772746541462/index.html" height="800px" width="100%" frameborder="0">
+</iframe>
+<p>Of the 18971 gene sets initially retrieved from the September 1, 2025
+Bader lab release, 14,077 were excluded due to size filtering (gene sets
+outside the 15–200 gene range), leaving 4,894 gene sets for analysis.
+Among these, 3,248 gene sets were enriched in the disease state, whereas
+1,646 were enriched in the control state. These counts reflect the
+overall distribution of pathway-level differential activity, with a
+predominance of upregulated pathways in the disease condition.</p>
+</div>
+<div id="enrichment-map" class="section level2" number="4.2">
+<h2><span class="header-section-number">4.2</span> Enrichment Map</h2>
+<p>To facilitate the interpretation of our non-thresholded enrichment
+results from GSEA, we will generate an enrichment map using the Desktop
+Version of Cytoscape (version 3.10.4) <span class="citation">(<a
+href="#ref-Cytoscape2003">Shannon et al. 2003</a>)</span>. The
+EnrichmentMap pipeline collection (version 1.1.0), downloaded from the
+Cytoscape App Store, will be used to convert the GSEA output into a
+network representation, where each node corresponds to a gene set and
+edges indicate overlap between gene sets <span class="citation">(<a
+href="#ref-EnrichmentMap2010">Merico et al. 2010</a>)</span>. This
+network-based visualization will allow us to intuitively interpret the
+relationships between enriched pathways, identification of subnetwork
+clusters, and assess central or highly connected nodes <span
+class="citation">(<a href="#ref-isserlin_2026">Isserlin
+2026</a>)</span>.</p>
+<div id="basic-map" class="section level3" number="4.2.1">
+<h3><span class="header-section-number">4.2.1</span> Basic Map</h3>
+<p>We will use the GSEA run performed in the prior section to generate
+our enrichment map <span class="citation">(<a
+href="#ref-GSEA2005">Subramanian et al. 2005</a>)</span>. The following
+parameters were used to create the map using Cytoscape:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Define the Cytoscape parameter fields</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>parameter_fields <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="st">&quot;Analysis Type&quot;</span>, </span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="st">&quot;Phenotypes&quot;</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="st">&quot;FDR q-value cutoff&quot;</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  <span class="st">&quot;Positive enrichments&quot;</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>  <span class="st">&quot;Negative enrichments&quot;</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  <span class="st">&quot;GMT gene sets&quot;</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  <span class="st">&quot;Ranked gene list&quot;</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>  <span class="st">&quot;Expression matrix&quot;</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>)</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co"># Define the Cytoscape parameter values</span></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>parameter_values <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>  <span class="st">&quot;GSEA&quot;</span>,</span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a>  <span class="st">&quot;AA (Up), Healthy (Down)&quot;</span>,</span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a>  <span class="st">&quot;0.05&quot;</span>,</span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>  <span class="st">&quot;~/projects/A2_gsea_results/aa_vs_healthy.GseaPreranked.1772746541462/gsea_report_for_na_pos_1772746541462.tsv&quot;</span>,</span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a>  <span class="st">&quot;~/projects/A2_gsea_results/aa_vs_healthy.GseaPreranked.1772746541462/gsea_report_for_na_neg_1772746541462.tsv&quot;</span>,</span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a>  <span class="st">&quot;~/projects/A2_data/Human_GOBP_AllPathways_noPFOCR_no_GO_iea_September_01_2025_symbol.gmt&quot;</span>,</span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a>  <span class="st">&quot;~/projects/A2_data/aa_vs_healthy.rnk&quot;</span>,</span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a>  <span class="st">&quot;~/projects/A2_data/aa_normalized_data.csv&quot;</span></span>
+<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a>)</span>
+<span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a></span>
+<span id="cb11-25"><a href="#cb11-25" tabindex="-1"></a><span class="co"># Visualize the parameters as a table</span></span>
+<span id="cb11-26"><a href="#cb11-26" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">tibble</span>(</span>
+<span id="cb11-27"><a href="#cb11-27" tabindex="-1"></a>  <span class="at">category =</span> parameter_fields,</span>
+<span id="cb11-28"><a href="#cb11-28" tabindex="-1"></a>  <span class="at">n        =</span> parameter_values, </span>
+<span id="cb11-29"><a href="#cb11-29" tabindex="-1"></a>), <span class="at">format  =</span> <span class="st">&quot;html&quot;</span>, <span class="at">caption =</span> <span class="st">&quot;Table 6: Cytoscape parameters used to generate the enrichment map.&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-30"><a href="#cb11-30" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="st">&quot;striped&quot;</span>, <span class="at">full_width =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Table 6: Cytoscape parameters used to generate the enrichment map.
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+category
+</th>
+<th style="text-align:left;">
+n
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Analysis Type
+</td>
+<td style="text-align:left;">
+GSEA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Phenotypes
+</td>
+<td style="text-align:left;">
+AA (Up), Healthy (Down)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+FDR q-value cutoff
+</td>
+<td style="text-align:left;">
+0.05
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Positive enrichments
+</td>
+<td style="text-align:left;">
+~/projects/A2_gsea_results/aa_vs_healthy.GseaPreranked.1772746541462/gsea_report_for_na_pos_1772746541462.tsv
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Negative enrichments
+</td>
+<td style="text-align:left;">
+~/projects/A2_gsea_results/aa_vs_healthy.GseaPreranked.1772746541462/gsea_report_for_na_neg_1772746541462.tsv
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GMT gene sets
+</td>
+<td style="text-align:left;">
+~/projects/A2_data/Human_GOBP_AllPathways_noPFOCR_no_GO_iea_September_01_2025_symbol.gmt
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Ranked gene list
+</td>
+<td style="text-align:left;">
+~/projects/A2_data/aa_vs_healthy.rnk
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Expression matrix
+</td>
+<td style="text-align:left;">
+~/projects/A2_data/aa_normalized_data.csv
+</td>
+</tr>
+</tbody>
+</table>
+<p>With these parameters, Cytoscape will create the following rough
+unformatted map.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">include_graphics</span>(<span class="st">&quot;figures/rough_map.png&quot;</span>)</span></code></pre></div>
+<div class="figure">
+<img src="figures/rough_map.png" alt="**Figure 1:** Initial enrichment map prior to annotation and formatting." width="594" />
+<p class="caption">
+<strong>Figure 1:</strong> Initial enrichment map prior to annotation
+and formatting.
+</p>
+</div>
+<p>Inspecting our map’s metadata prior to manual layout and filtering,
+we see that there are 104 nodes and 1305 edges.</p>
+</div>
+<div id="final-map" class="section level3" number="4.2.2">
+<h3><span class="header-section-number">4.2.2</span> Final Map</h3>
+<p>To create our final enrichment map, we must manually annotate and
+format it. We will use the AutoAnnotate package <span
+class="citation">(<a href="#ref-AutoAnnotate2016">Kucera et al.
+2016</a>)</span>, manual annotation, and style panels in Cytoscape to
+format the final map with the following parameters:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Define the Clustering parameter fields</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>cluster_parameter_fields <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="st">&quot;Cluster Creation&quot;</span>, </span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="st">&quot;Layout Network to Minimize Cluster Overlap&quot;</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="st">&quot;Max Words per Label&quot;</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="st">&quot;Minimum Word Occurrence&quot;</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="st">&quot;Adjacent Word Bonus&quot;</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>)</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co"># Define the Clustering parameter values</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>cluster_parameter_values <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>  <span class="st">&quot;Use clusterMaker2 App&quot;</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>  <span class="st">&quot;Yes&quot;</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>  <span class="st">&quot;3&quot;</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>  <span class="st">&quot;1&quot;</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>  <span class="st">&quot;8&quot;</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>)</span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="co"># Visualize the parameters as a table</span></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">tibble</span>(</span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>  <span class="at">category =</span> cluster_parameter_fields,</span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a>  <span class="at">n        =</span> cluster_parameter_values, </span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a>), <span class="at">format  =</span> <span class="st">&quot;html&quot;</span>, <span class="at">caption =</span> <span class="st">&quot;Table 7: Cytoscape clustering parameters used to generate the enrichment map.&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="st">&quot;striped&quot;</span>, <span class="at">full_width =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Table 7: Cytoscape clustering parameters used to generate the enrichment
+map.
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+category
+</th>
+<th style="text-align:left;">
+n
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Cluster Creation
+</td>
+<td style="text-align:left;">
+Use clusterMaker2 App
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Layout Network to Minimize Cluster Overlap
+</td>
+<td style="text-align:left;">
+Yes
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Max Words per Label
+</td>
+<td style="text-align:left;">
+3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Minimum Word Occurrence
+</td>
+<td style="text-align:left;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Adjacent Word Bonus
+</td>
+<td style="text-align:left;">
+8
+</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Define the style parameter fields</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>style_parameter_fields <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="st">&quot;Label Fond Size&quot;</span>, </span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="st">&quot;(Node) Size&quot;</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>  <span class="st">&quot;Label Position&quot;</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>  <span class="st">&quot;Label Background Colour&quot;</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>  <span class="st">&quot;Label Background Shape&quot;</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>  <span class="st">&quot;Repressed Pathways Box&quot;</span>,</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>  <span class="st">&quot;Activated Pathways Box&quot;</span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>)</span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co"># Define the style parameter values</span></span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>style_parameter_values <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>  <span class="st">&quot;12&quot;</span>,</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>  <span class="st">&quot;15&quot;</span>,</span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>  <span class="st">&quot;(Manually adjusted to below)&quot;</span>,</span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>  <span class="st">&quot;Light Green&quot;</span>,</span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>  <span class="st">&quot;Rounded Rectangle&quot;</span>,</span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a>  <span class="st">&quot;Light Blue, Border Width of 1&quot;</span>,</span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a>  <span class="st">&quot;Light Red, Border Width of 1&quot;</span></span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a>)</span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a></span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="co"># Visualize the parameters as a table</span></span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">tibble</span>(</span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a>  <span class="at">category =</span> style_parameter_fields,</span>
+<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a>  <span class="at">n        =</span> style_parameter_values, </span>
+<span id="cb14-27"><a href="#cb14-27" tabindex="-1"></a>), <span class="at">format  =</span> <span class="st">&quot;html&quot;</span>, <span class="at">caption =</span> <span class="st">&quot;Table 8: Cytoscape styling parameters used to generate the enrichment map.&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-28"><a href="#cb14-28" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="st">&quot;striped&quot;</span>, <span class="at">full_width =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Table 8: Cytoscape styling parameters used to generate the enrichment
+map.
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+category
+</th>
+<th style="text-align:left;">
+n
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Label Fond Size
+</td>
+<td style="text-align:left;">
+12
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+(Node) Size
+</td>
+<td style="text-align:left;">
+15
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Label Position
+</td>
+<td style="text-align:left;">
+(Manually adjusted to below)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Label Background Colour
+</td>
+<td style="text-align:left;">
+Light Green
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Label Background Shape
+</td>
+<td style="text-align:left;">
+Rounded Rectangle
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Repressed Pathways Box
+</td>
+<td style="text-align:left;">
+Light Blue, Border Width of 1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Activated Pathways Box
+</td>
+<td style="text-align:left;">
+Light Red, Border Width of 1
+</td>
+</tr>
+</tbody>
+</table>
+<p>Thus, using the parameters as defined above, we generate the
+following formatted and clsutered enrichment map.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">include_graphics</span>(<span class="st">&quot;figures/enrichment_map.png&quot;</span>)</span></code></pre></div>
+<div class="figure">
+<img src="figures/enrichment_map.png" alt="**Figure 2:** Pathway enrichment map of non-SAA versus healthy patients. Repressed pathways are shown in blue and activated pathways are shown in red. Smaller node labels highlighted in light green indicate pathway labels, and larger non-highlighted labels indicate cluster labels. The size of the cluster labels are uniform and do not reflect their size." width="920" />
+<p class="caption">
+<strong>Figure 2:</strong> Pathway enrichment map of non-SAA versus
+healthy patients. Repressed pathways are shown in blue and activated
+pathways are shown in red. Smaller node labels highlighted in light
+green indicate pathway labels, and larger non-highlighted labels
+indicate cluster labels. The size of the cluster labels are uniform and
+do not reflect their size.
+</p>
+</div>
+</div>
+</div>
+<div id="theme-network" class="section level2" number="4.3">
+<h2><span class="header-section-number">4.3</span> Theme Network</h2>
+<p>Finally, we will further collapse our final enrichment map into a
+theme network. This will be achieved by pulling only the cluster names
+that are present to highlight if major themes are present in our
+enrichment map.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">include_graphics</span>(<span class="st">&quot;figures/theme_network.png&quot;</span>)</span></code></pre></div>
+<div class="figure">
+<img src="figures/theme_network.png" alt="**Figure 3:** Theme network enrichment map of non-SAA versus healthy patients. Repressed pathways are shown in blue, and activated pathways are shown in red." width="920" />
+<p class="caption">
+<strong>Figure 3:</strong> Theme network enrichment map of non-SAA
+versus healthy patients. Repressed pathways are shown in blue, and
+activated pathways are shown in red.
+</p>
+</div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">rm</span>(aa_data, diff_expr, metadata, ranked_genes, analysis_name, dest_gmt_file,</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>   gmt_file, gmt_url, gsea_jar, gsea_results, gsea_results_dir, output_dir,</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>   rnk_file, run_gsea, working_dir, cluster_parameter_fields, cluster_parameter_values,</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>   parameter_fields, parameter_values, style_parameter_fields, style_parameter_values)</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="fu">gc</span>()</span></code></pre></div>
+<pre><code>##           used (Mb) gc trigger  (Mb) max used  (Mb)
+## Ncells 1350884 72.2    2626911 140.3  2626911 140.3
+## Vcells 2401261 18.4    8388608  64.0  6638071  50.7</code></pre>
+</div>
+<div id="interpretation-nonthresholded" class="section level2"
+number="4.4">
+<h2><span class="header-section-number">4.4</span> Interpretation</h2>
+<div id="summary-of-results-nonthresholded" class="section level3"
+number="4.4.1">
+<h3><span class="header-section-number">4.4.1</span> Summary of
+Results</h3>
+<p>Non-thresholded gene set enrichment analysis using GSEA <span
+class="citation">(<a href="#ref-GSEA2005">Subramanian et al.
+2005</a>)</span> of the ranked gene list from assignment 1 revealed
+broad patterns of pathway activation and repression between non-SAA and
+healthy samples in our cohort. Among 4894 analyzed gene sets (after
+applying gene set size filters of 15-200, which excluded 14077 out of
+18971 sets), 3248 gene sets were upregulated in non-SAA samples, of
+which 255 reached significance at the chosen threshold of FDR &lt; 0.25.
+In contrast, 1646 gene sets were upregulated in healthy samples (also
+referred to as downregulated in our analysis), with 107 significantly
+enriched at the same threshold. The dataset included 10983 gene features
+for the marker comparison.</p>
+<p>Enrichment map visualization using Cytoscape <span
+class="citation">(<a href="#ref-Cytoscape2003">Shannon et al.
+2003</a>)</span> comprised 104 nodes and 1305 edges with a high
+clustering coefficient of 0.997. The primary cluster comprised repressed
+pathways related to protein translation and synthesis (51 nodes), along
+with six singleton repressed nodes. Smaller upregulated clusters
+contained between 2-5 nodes each, encompassing pathways such as antigen
+presentation (4 nodes), receptor signaling (4), cellular differentiation
+(5), lipoprotein particle response (3), general cell processes (4), and
+T cell receptor signalling (3), alongside 16 singleton upregulated
+nodes.</p>
+</div>
+<div id="major-network-themes" class="section level3" number="4.4.2">
+<h3><span class="header-section-number">4.4.2</span> Major Network
+Themes</h3>
+<p>The theme network, which collapsed the enrichment map into only named
+clusters, contained 7 repressed and 21 activated clusters for a total of
+28. Notably, no edges connected nodes in the theme network, suggesting
+that the primary functional relationships were functionally discrete
+within the network structure, rather than across clusters.</p>
+<p>Major themes in the repressed network corresponded to protein
+translation and biosynthetic processes, consistent with reduced
+proliferative or metabolic activity in non-SAA samples <span
+class="citation">(<a href="#ref-zhu_single-cell_2021">Zhu et al.
+2021</a>)</span>. Activated themes predominately involved immune-related
+processes, including antigen presentation, receptor signaling, and T
+cell activation, fitting the expected model of immune activation in
+disease <span class="citation">(<a href="#ref-wu_human_2025">Wu et al.
+2025</a>)</span>. Several smaller activated clusters, such as
+lipoprotein particle response and cellular differentiation, may
+represent novel or less well-characterized pathways that warrant further
+investigation.</p>
+</div>
+<div id="comparison-with-original-paper-nonthresholded"
+class="section level3" number="4.4.3">
+<h3><span class="header-section-number">4.4.3</span> Comparison with
+Original Paper</h3>
+<p>Our enrichment analyses largely corroborate the activated mechanisms
+reported in the original study. Upregulated gene sets in non-SAA samples
+were dominantly immune-related processes, including antigen
+presentation, receptor signaling, and T cell activation, consistent with
+the paper’s observation of increased immune and cytokine signaling <span
+class="citation">(<a href="#ref-zhu_single-cell_2021">Zhu et al.
+2021</a>)</span>.</p>
+<p>However, the original paper reported repression of alternative
+splicing and skewed polyadenylation, rather than the global
+ribosome/translation signature we identified. While these are both
+post-transcriptional regulatory phenomena, and repressed translation and
+biosynthesis can reflect downstream consequences of altered RNA
+processing in stressed hematopoeisis, this is interpretive and not
+explicitly shown. Therefore, we must cautiously interpret the alignment
+of our findings of repressed pathways with the original paper as
+reflecting overlapping functional consequences as this link is not
+directly demonstrated <span class="citation">(<a
+href="#ref-zhu_single-cell_2021">Zhu et al. 2021</a>)</span>.</p>
+<p>Furthermore, our results recapitulate the paper’s identification of
+stress-related transcriptional programs: the primary repressed cluster
+suggests broad suppression of translational machinery, analogous to the
+reported downregulation of mRNA polyadenylation and splicing components
+in AA. Activated clusters related to immune signaling, particularly
+antigen presentation and cytokine responses, mirror the reported
+IFN-γ-mediated activation and regulation of cell death pathways <span
+class="citation">(<a href="#ref-zhu_single-cell_2021">Zhu et al.
+2021</a>)</span>.</p>
+</div>
+<div id="support-of-findings-nonthresholded" class="section level3"
+number="4.4.4">
+<h3><span class="header-section-number">4.4.4</span> Support of
+Findings</h3>
+<p>Non-severe AA and related immune marrow failure show dominant immune
+activation, including cytotoxic T cells, Th1/Th17 skewing, IFN-γ/TNF‑α
+signaling, and enhanced antigen presentation machinery in HSPCs (from
+which the non-SAA samples are derived) and immune cells <span
+class="citation">(<a href="#ref-wu_human_2025">Wu et al.
+2025</a>)</span>. This aligns with our findings that the upregulated
+gene set is immune-related and consistent with increased immune/cytokine
+signaling.</p>
+<p>Cellular stress responses often globally repress translation and
+biosynthetic pathways while selectively inducing stress-response genes
+<span class="citation">(<a
+href="#ref-pakoszebrucka_integrated_2016">Pakos‐Zebrucka et al.
+2016</a>)</span>. However, no AA study directly shows that the disease
+specific splicing defects produce the exact translation repression
+pattern we have discovered.</p>
+<p>Finally, the clustering of immune-signaling mirroring IFN-γ-mediated
+activation and regulation of cell-death pathways are consistent with
+reports of IFN‑γ/TNF‑α‑driven apoptosis and ferroptosis of HSPCs in AA
+<span class="citation">(<a href="#ref-wu_human_2025">Wu et al.
+2025</a>)</span>.</p>
+</div>
+<div id="comparison-with-thresholded" class="section level3"
+number="4.4.5">
+<h3><span class="header-section-number">4.4.5</span> Comparison with
+Thresholded</h3>
+<p>The thresholded and non-thresholded enrichment analysis results are
+largely consistent and complementary, sharing the overarching theme of
+adaptive immune activation. Both analyses identify enrichment of
+pathways related to B- and T-cell function among upregulated genes.
+However, they capture this signal in different ways: thresholded ORA
+highlights pathways driven by genes with the strongest differential
+expression, whereas the non-thresholded GSEA detects coordinated shifts
+across many genes within immune pathways. Together, these results
+suggest coordinated activation of B- and T-cell programs, with strong
+effects in a subset of genes and broader, more modest shifts across a
+wider set of immune-related genes. This fits the classic adaptive immune
+activation where antigen presentation and TCR/BCR signaling drive clonal
+expansion and differentiation <span class="citation">(<a
+href="#ref-shah_t_2021">Shah et al. 2021</a>)</span>.</p>
+<p>However, some differences between the analyses exist. Only the
+thresholded analysis identified the downregulation of EGFR signaling and
+clathrin-mediated endocytosis. ORA focuses on genes that pass a
+predifined significance threshold, thus it is more likely to highlight
+pathways dominated by a smaller number of strongly changing genes.
+Downregulation of these pathways may therefore reflect pronounced
+expression changes in genes involved in growth factor signaling and
+membrane trafficking. In contrast, only the non-thresholded analysis
+detected downregulation of protein translation. This result suggests
+that many ribosomal and translation-associated genes show modest but
+coordinated decreases in expression, which may not individually meet
+differential expression significance thresholds. Such distributed shifts
+are more readily detected by GSEA because it evaluates enrichment across
+the entire ranked gene list rather than only among significantly
+differentially expressed genes <span class="citation">(<a
+href="#ref-geistlinger_toward_2021">Geistlinger et al.
+2021</a>)</span>.</p>
+<p>Therefore, the comparison between thresholded and non-thresholded
+enrichment analysis is not entirely straightforward. ORA and GSEA rely
+on different statistical frameworks and gene universes: ORA evaluates
+enrichment among genes passing an arbitrary significance threshold,
+whereas GSEA tests whether genes in a set are systematically shifted
+within the full ranked list. Consequently, ORA tends to emphasize
+pathways driven by large expression changes in a subset of genes, while
+GSEA is more sensitive to coherent but smaller shifts across many genes.
+Interpreted together, the two analyses support a consistent biological
+picture of adaptive immune activation while highlighting complementary
+aspects of the underlying transcriptional changes <span
+class="citation">(<a href="#ref-geistlinger_toward_2021">Geistlinger et
+al. 2021</a>)</span>.</p>
+<hr />
+</div>
+</div>
+</div>
+<div id="conclusion" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> Conclusion</h1>
+<p>Both thresholded and non-thresholded enrichment analysis approaches
+indicate coordinated immune activation with underlying cellular
+reprogramming in non-SAA versus healthy samples in our cohort.
+Thresholded analysis highlights strong upregulation of adaptive immune
+processes, especially B cell activation, proliferation, receptor
+signaling, and general lymphocyte/immune activation, alongside
+downregulation of EGFR signaling and clathrin-mediated endocytosis,
+suggesting altered growth factor and membrane-trafficking pathways.</p>
+<p>The non-thresholded analysis broadens this picture, revealing
+increased antigen presentation, receptor signaling, cellular
+differentiation, lipoprotein particle response, general cellular
+processes, and T cell receptor signaling, consistent with a more global
+remodeling of adaptive immunity and cell-state transitions <span
+class="citation">(<a href="#ref-di_conza_control_2023">Di Conza et al.
+2023</a>)</span>. Concurrent downregulation of protein
+translation/synthesis in the non-thresholded results points to a
+widespread shift in translational programs, aligning with the idea that
+many genes show modest but coordinated changes, while the thresholded
+methods capture the most strongly perturbed immune and signaling
+pathways.</p>
+<hr />
+</div>
+<div id="question-key" class="section level1" number="6">
+<h1><span class="header-section-number">6</span> Question Key</h1>
+<div id="thresholded-over-representation-analysis"
+class="section level2" number="6.1">
+<h2><span class="header-section-number">6.1</span> Thresholded
+Over-Representation Analysis</h2>
+<p><a href="#thresholded-overrepresentation-analysis"><strong>6.1.1
+Which method did you use and why?</strong></a></p>
+<p><a href="#thresholded-overrepresentation-analysis"><strong>6.1.2 What
+annotation data did you use and why? What version of the annotation are
+you using?</strong></a></p>
+<p><a href="#gene-set-definition"><strong>6.1.3 How many gene sets were
+returned with what thresholds?</strong></a></p>
+<p><strong>6.1.4 Run the analysis using the up-regulated genes, and the
+down-regulated set of genes separately. How do these results compare to
+using the whole list (i.e. all differentially expressed genes together
+versus the up-regulated and down-regulated differentially expressed
+genes separately)?</strong></p>
+<p><a href="#analysis-of-upregulated-genes"><em>A. Analysis using the
+up-regulated genes</em></a></p>
+<p><a href="#analysis-of-downregulated-genes"><em>B. Analysis using the
+down-regulated genes</em></a></p>
+<p><a href="#analysis-of-all-significant-genes"><em>C. Analysis using
+the down-regulated genes</em></a></p>
+</div>
+<div id="thresholded-analysis-interpretation" class="section level2"
+number="6.2">
+<h2><span class="header-section-number">6.2</span> Thresholded Analysis
+Interpretation</h2>
+<p><a href="#comparison-with-original-paper-thresholded"><strong>6.2.1
+Do the over-representation results support conclusions or mechanism
+discussed in the original paper?</strong></a></p>
+<p><a href="#support-of-findings-thresholded"><strong>6.2.2 Can you find
+evidence (i.e. publications) to support some of the results that you
+see? How does this evidence support your results?</strong></a></p>
+</div>
+<div id="non-thresholded-gene-set-enrichment-analysis"
+class="section level2" number="6.3">
+<h2><span class="header-section-number">6.3</span> Non-Thresholded Gene
+Set Enrichment Analysis</h2>
+<p><a href="#gsea-analysis"><strong>6.3.1 What method did you use? What
+gene sets did you use? Make sure to specify versions and cite your
+methods.</strong></a></p>
+<p><a href="#summary-of-results-nonthresholded"><strong>6.3.2 Summarize
+your enrichment results?</strong></a></p>
+<p><a href="#comparison-with-thresholded"><strong>6.3.3 How do these
+results compare to the results from the thresholded analysis? Compare
+qualitatively. Is this a straight-forward comparison? Why or why
+not?</strong></a></p>
+</div>
+<div id="visualize-your-gene-set-enrichment-analysis-in-cytoscape"
+class="section level2" number="6.4">
+<h2><span class="header-section-number">6.4</span> Visualize your Gene
+Set Enrichment Analysis in Cytoscape</h2>
+<p><a href="#basic-map"><strong>6.4.1 Create an enrichment map. How many
+nodes and how many edges are in the resulting map? What thresholds were
+used to create this map? Make sure to record all thresholds. Include a
+screenshot of your network prior to manual layout.</strong></a></p>
+<p><a href="#final-map"><strong>6.4.2 Annotation your network. What
+parameters did you use to annotate the network. If you are using the
+default parameters, make sure to list them as well.</strong></a></p>
+<p><a href="#final-map"><strong>6.4.3. Make a publication-ready figure.
+Include this figure with proper legends in your
+notebook.</strong></a></p>
+<p><strong>6.4.4 Collapse your network into a theme network. What are
+the major themes present in this analysis? Do they fit with the model?
+Are there any novel pathways or themes?</strong></p>
+<p><a href="#theme-network"><em>A. Theme Network</em></a></p>
+<p><a href="#major-network-themes"><em>B. Major Network Themes
+Analysis</em></a></p>
+</div>
+<div id="non-thresholded-interpretation-and-detailed-view-of-results"
+class="section level2" number="6.5">
+<h2><span class="header-section-number">6.5</span> Non-Thresholded
+Interpretation and Detailed View of Results</h2>
+<p><a
+href="#comparison-with-original-paper-nonthresholded"><strong>6.5.1 Do
+the enrichment results support conclusions or mechanisms discussed in
+the original paper? How do these results differ from the thresholded
+over-representation analysis?</strong></a></p>
+<p><a href="#support-of-findings-nonthresholded"><strong>6.5.2 Can you
+find evidence (i.e. publications) to support some of the results that
+you see? How does this evidence support your results?</strong></a></p>
+<hr />
+</div>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-BaderLab2025" class="csl-entry">
+Bader Lab, University of Toronto. 2025. <em>Bader Lab Human Gene Sets,
+September 1, 2025 Release (Symbol Format)</em>. <a
+href="https://download.baderlab.org/EM_Genesets/September_01_2025/Human/symbol/">https://download.baderlab.org/EM_Genesets/September_01_2025/Human/symbol/</a>.
+</div>
+<div id="ref-barrett_ncbi_2013" class="csl-entry">
+Barrett, Tanya, Stephen E. Wilhite, Pierre Ledoux, et al. 2013.
+<span>“<span>NCBI</span> <span>GEO</span>: Archive for Functional
+Genomics Data Sets—Update.”</span> <em>Nucleic Acids Res</em> 41 (D1):
+D991–95. <a
+href="https://doi.org/10.1093/nar/gks1193">https://doi.org/10.1093/nar/gks1193</a>.
+</div>
+<div id="ref-chen_edger_2025" class="csl-entry">
+Chen, Yunshun, Lizhong Chen, Aaron T. L. Lun, Pedro Baldoni, and Gordon
+K. Smyth. 2025. <span>“<span class="nocase">edgeR</span> V4: Powerful
+Differential Analysis of Sequencing Data with Expanded Functionality and
+Improved Support for Small Counts and Larger Datasets.”</span>
+<em>Nucleic Acids Research</em> 53 (2): gkaf018. <a
+href="https://doi.org/10.1093/nar/gkaf018">https://doi.org/10.1093/nar/gkaf018</a>.
+</div>
+<div id="ref-genovese_2026" class="csl-entry">
+Christopher, Genovese, Lazar Nicole, and Nichols Thomas. n.d.
+<em>Thresholding of <span>Statistical</span> <span>Maps</span> in
+<span>Functional</span> <span>Neuroimaging</span> <span>Using</span> the
+<span>False</span> <span>Discovery</span> <span>Rate</span> -
+<span>ScienceDirect</span></em>. Accessed February 10, 2026. <a
+href="https://10.1006/nimg.2001.1037">10.1006/nimg.2001.1037</a>.
+</div>
+<div id="ref-di_conza_control_2023" class="csl-entry">
+Di Conza, Giusy, Ping-Chih Ho, Juan R. Cubillos-Ruiz, and Stanley
+Ching-Cheng Huang. 2023. <span>“Control of Immune Cell Function by the
+Unfolded Protein Response.”</span> <em>Nat Rev Immunol</em> 23 (9):
+546–62. <a
+href="https://doi.org/10.1038/s41577-023-00838-0">https://doi.org/10.1038/s41577-023-00838-0</a>.
+</div>
+<div id="ref-geistlinger_toward_2021" class="csl-entry">
+Geistlinger, Ludwig, Gergely Csaba, Mara Santarelli, et al. 2021.
+<span>“Toward a Gold Standard for Benchmarking Gene Set Enrichment
+Analysis.”</span> <em>Briefings in Bioinformatics</em> 22 (1): 545–56.
+<a
+href="https://doi.org/10.1093/bib/bbz158">https://doi.org/10.1093/bib/bbz158</a>.
+</div>
+<div id="ref-hong_separate_2014" class="csl-entry">
+Hong, Guini, Wenjing Zhang, Hongdong Li, Xiaopei Shen, and Zheng Guo.
+2014. <span>“Separate Enrichment Analysis of Pathways for up- and
+Downregulated Genes.”</span> <em>J R Soc Interface</em> 11 (92):
+20130950. <a
+href="https://doi.org/10.1098/rsif.2013.0950">https://doi.org/10.1098/rsif.2013.0950</a>.
+</div>
+<div id="ref-noauthor_rnaseq_nodate" class="csl-entry">
+Hrdlickova, Radmila, Masoud Toloue, and Bin Tian. n.d.
+<em><span>RNA</span>‐<span>Seq</span> Methods for Transcriptome Analysis
+- <span>Hrdlickova</span> - 2017 - <span>WIREs</span> <span>RNA</span> -
+<span>Wiley</span> <span>Online</span> <span>Library</span></em>.
+Accessed February 10, 2026. <a
+href="https://wires.onlinelibrary.wiley.com/doi/abs/10.1002/wrna.1364">https://wires.onlinelibrary.wiley.com/doi/abs/10.1002/wrna.1364</a>.
+</div>
+<div id="ref-isserlin_2026" class="csl-entry">
+Isserlin, Ruth. 2026. <em>BCB420: <span>Computational</span>
+<span>Systems</span> <span>Biology</span> <span>Lectures</span></em>.
+</div>
+<div id="ref-reactome" class="csl-entry">
+Jassal, B., L. Matthews, G. Viteri, et al. 2020. <span>“The Reactome
+Pathway Knowledgebase.”</span> <em>Nucleic Acids Research</em> 48 (D1):
+D498–503. <a
+href="https://doi.org/10.1093/nar/gkz1031">https://doi.org/10.1093/nar/gkz1031</a>.
+</div>
+<div id="ref-kegg" class="csl-entry">
+Kanehisa, M., M. Furumichi, Y. Sato, M. Ishiguro-Watanabe, and M.
+Tanabe. 2021. <span>“KEGG: Integrating Viruses and Cellular
+Organisms.”</span> <em>Nucleic Acids Research</em> 49 (D1): D545–51. <a
+href="https://doi.org/10.1093/nar/gkaa970">https://doi.org/10.1093/nar/gkaa970</a>.
+</div>
+<div id="ref-kolberg_gprofiler2_2020" class="csl-entry">
+Kolberg, Liis, Uku Raudvere, Ivan Kuzmin, Jaak Vilo, and Hedi Peterson.
+2020. <span>“Gprofiler2 – an <span>R</span> Package for Gene List
+Functional Enrichment Analysis and Namespace Conversion Toolset
+g:<span>Profiler</span>.”</span> <em>F1000Res</em> 9 (November):
+ELIXIR–709. <a
+href="https://doi.org/10.12688/f1000research.24956.2">https://doi.org/10.12688/f1000research.24956.2</a>.
+</div>
+<div id="ref-AutoAnnotate2016" class="csl-entry">
+Kucera, Martin, Ruth Isserlin, Alexey Arkhangorodsky, and Gary D. Bader.
+2016. <span>“AutoAnnotate: A Cytoscape App for Summarizing Networks with
+Semantic Annotations.”</span> <em>F1000Research</em> 5: 1717. <a
+href="https://doi.org/10.12688/f1000research.9364.2">https://doi.org/10.12688/f1000research.9364.2</a>.
+</div>
+<div id="ref-li_transcriptional_2017" class="csl-entry">
+Li, Mengyuan, Qingrong Sun, and Xiaosheng Wang. 2017.
+<span>“Transcriptional Landscape of Human Cancers.”</span>
+<em>Oncotarget</em> 8 (21): 34534–51. <a
+href="https://doi.org/10.18632/oncotarget.15837">https://doi.org/10.18632/oncotarget.15837</a>.
+</div>
+<div id="ref-MSigDB2015" class="csl-entry">
+Liberzon, A., C. Birger, H. Thorvaldsdóttir, M. Ghandi, J. P. Mesirov,
+and P. Tamayo. 2015. <span>“The Molecular Signatures Database (MSigDB)
+Hallmark Gene Set Collection.”</span> <em>Cell Systems</em> 1 (6):
+417–25. <a
+href="https://doi.org/10.1016/j.cels.2015.12.004">https://doi.org/10.1016/j.cels.2015.12.004</a>.
+</div>
+<div id="ref-EnrichmentMap2010" class="csl-entry">
+Merico, Daniele, Ruth Isserlin, Oliver Stueker, Andrew Emili, and Gary
+D. Bader. 2010. <span>“Enrichment Map: A Network-Based Method for
+Gene-Set Enrichment Visualization and Interpretation.”</span> <em>PLoS
+ONE</em> 5 (11): e13984. <a
+href="https://doi.org/10.1371/journal.pone.0013984">https://doi.org/10.1371/journal.pone.0013984</a>.
+</div>
+<div id="ref-muley_functional_2025" class="csl-entry">
+Muley, Vijaykumar Yogesh. 2025. <span>“Functional <span>Insights</span>
+<span>Through</span> <span>Gene</span> <span>Ontology</span>,
+<span>Disease</span> <span>Ontology</span>, and <span>KEGG</span>
+<span>Pathway</span> <span>Enrichment</span>.”</span> In
+<em>Computational <span>Virology</span></em>, edited by Vijaykumar
+Yogesh Muley. Springer US. <a
+href="https://doi.org/10.1007/978-1-0716-4546-8_4">https://doi.org/10.1007/978-1-0716-4546-8_4</a>.
+</div>
+<div id="ref-wickham_tibble" class="csl-entry">
+Müller, Kirill, and Hadley Wickham. 2025. <em>Tibble: Simple Data
+Frames</em>. <a
+href="https://tibble.tidyverse.org/">https://tibble.tidyverse.org/</a>.
+</div>
+<div id="ref-pakoszebrucka_integrated_2016" class="csl-entry">
+Pakos‐Zebrucka, Karolina, Izabela Koryga, Katarzyna Mnich, Mila Ljujic,
+Afshin Samali, and Adrienne M. Gorman. 2016. <span>“The Integrated
+Stress Response.”</span> <em>EMBO Rep</em> 17 (10): 1374–95. <a
+href="https://doi.org/10.15252/embr.201642195">https://doi.org/10.15252/embr.201642195</a>.
+</div>
+<div id="ref-reimand_pathway_2019" class="csl-entry">
+Reimand, Jüri, Ruth Isserlin, Veronique Voisin, et al. 2019.
+<span>“Pathway Enrichment Analysis and Visualization of Omics Data Using
+g:<span>Profiler</span>, <span>GSEA</span>, <span>Cytoscape</span> and
+<span>EnrichmentMap</span>.”</span> <em>Nat Protoc</em> 14 (2): 482–517.
+<a
+href="https://doi.org/10.1038/s41596-018-0103-9">https://doi.org/10.1038/s41596-018-0103-9</a>.
+</div>
+<div id="ref-reiner_identifying_2003" class="csl-entry">
+Reiner, Anat, Daniel Yekutieli, and Yoav Benjamini. 2003.
+<span>“Identifying Differentially Expressed Genes Using False Discovery
+Rate Controlling Procedures.”</span> <em>Bioinformatics</em> 19 (3):
+368–75. <a
+href="https://doi.org/10.1093/bioinformatics/btf877">https://doi.org/10.1093/bioinformatics/btf877</a>.
+</div>
+<div id="ref-shah_t_2021" class="csl-entry">
+Shah, Kinjal, Amr Al-Haidari, Jianmin Sun, and Julhash U. Kazi. 2021.
+<span>“T Cell Receptor (<span>TCR</span>) Signaling in Health and
+Disease.”</span> <em>Sig Transduct Target Ther</em> 6 (1): 412. <a
+href="https://doi.org/10.1038/s41392-021-00823-w">https://doi.org/10.1038/s41392-021-00823-w</a>.
+</div>
+<div id="ref-Cytoscape2003" class="csl-entry">
+Shannon, Paul, Andrew Markiel, Owen Ozier, et al. 2003.
+<span>“Cytoscape: A Software Environment for Integrated Models of
+Biomolecular Interaction Networks.”</span> <em>Genome Research</em> 13
+(11): 2498–504. <a
+href="https://doi.org/10.1101/gr.1239303">https://doi.org/10.1101/gr.1239303</a>.
+</div>
+<div id="ref-GSEA2005" class="csl-entry">
+Subramanian, Aravind, Pablo Tamayo, Vamsi K. Mootha, et al. 2005.
+<span>“Gene Set Enrichment Analysis: A Knowledge-Based Approach for
+Interpreting Genome-Wide Expression Profiles.”</span> <em>Proceedings of
+the National Academy of Sciences</em> 102 (43): 15545–50. <a
+href="https://doi.org/10.1073/pnas.0506580102">https://doi.org/10.1073/pnas.0506580102</a>.
+</div>
+<div id="ref-gobp" class="csl-entry">
+The Gene Ontology Consortium. 2021. <span>“The Gene Ontology Resource:
+Enriching a GOld Mine.”</span> <em>Nucleic Acids Research</em> 49 (D1):
+D325–34. <a
+href="https://doi.org/10.1093/nar/gkaa1113">https://doi.org/10.1093/nar/gkaa1113</a>.
+</div>
+<div id="ref-vieira_control_1996" class="csl-entry">
+Vieira, Amandio V., Christophe Lamaze, and Sandra L. Schmid. 1996.
+<span>“Control of <span>EGF</span> <span>Receptor</span>
+<span>Signaling</span> by <span>Clathrin</span>-<span>Mediated</span>
+<span>Endocytosis</span>.”</span> <em>Science</em> 274 (5295): 2086–89.
+<a
+href="https://doi.org/10.1126/science.274.5295.2086">https://doi.org/10.1126/science.274.5295.2086</a>.
+</div>
+<div id="ref-wickham_dplyr_2023" class="csl-entry">
+Wickham, Hadley, Romain François, Lionel Henry, Kirill Müller, and Davis
+Vaughan. 2023. <em>Dplyr: <span>A</span> <span>Grammar</span> of
+<span>Data</span> <span>Manipulation</span></em>. <a
+href="https://doi.org/10.32614/CRAN.package.dplyr">https://doi.org/10.32614/CRAN.package.dplyr</a>.
+</div>
+<div id="ref-wu_human_2025" class="csl-entry">
+Wu, Zhijie, Shouguo Gao, Xingmin Feng, et al. 2025. <span>“Human
+Autoimmunity at Single Cell Resolution in Aplastic Anemia Before and
+After Effective Immunotherapy.”</span> <em>Nat Commun</em> 16 (1): 5048.
+<a
+href="https://doi.org/10.1038/s41467-025-60213-6">https://doi.org/10.1038/s41467-025-60213-6</a>.
+</div>
+<div id="ref-stodden_knitr_2014" class="csl-entry">
+Xie, Yihui. 2014. <span>“Knitr: <span>A</span>
+<span>Comprehensive</span> <span>Tool</span> for
+<span>Reproducible</span> <span>Research</span> in
+<span>R</span>.”</span> In <em>Implementing <span>Reproducible</span>
+<span>Computational</span> <span>Research</span></em>, edited by
+Victoria Stodden, Friedrich Leisch, and Roger D. Peng. Chapman;
+Hall/CRC.
+</div>
+<div id="ref-young_aplastic_2018" class="csl-entry">
+Young, Neal S. 2018. <span>“Aplastic <span>Anemia</span>.”</span>
+<em>New England Journal of Medicine</em> 379 (17): 1643–56. <a
+href="https://doi.org/10.1056/NEJMra1413485">https://doi.org/10.1056/NEJMra1413485</a>.
+</div>
+<div id="ref-zhang_tgf-_2025" class="csl-entry">
+Zhang, Xin-Yan, Li-Ping Guo, Ya-Zhe Wang, et al. 2025.
+<span>“<span>TGF</span>-β Inhibition Restores Hematopoiesis and Immune
+Balance via Bone Marrow <span>EPCs</span> in Aplastic Anemia.”</span>
+<em>Exp Mol Med</em> 57 (6): 1324–38. <a
+href="https://doi.org/10.1038/s12276-025-01483-4">https://doi.org/10.1038/s12276-025-01483-4</a>.
+</div>
+<div id="ref-zhu_single-cell_2021" class="csl-entry">
+Zhu, Caiying, Yu Lian, Chenchen Wang, et al. 2021. <span>“Single-Cell
+Transcriptomics Dissects Hematopoietic Cell Destruction and
+<span>T</span>-Cell Engagement in Aplastic Anemia.”</span>
+<em>Blood</em> 138 (1): 23–33. <a
+href="https://doi.org/10.1182/blood.2020008966">https://doi.org/10.1182/blood.2020008966</a>.
+</div>
+<div id="ref-zhu_kableExtra" class="csl-entry">
+Zhu, Hao. 2024. <em>kableExtra: Construct Complex Table with ’Kable’ and
+Pipe Syntax</em>. <a
+href="http://haozhu233.github.io/kableExtra/">http://haozhu233.github.io/kableExtra/</a>.
+</div>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
